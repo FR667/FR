@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>暗影 - FR AI 科技公司 | 數位名片與官方簡介</title>
+    <title>暗影 - FR AI 科技公司 | 頂級數位官方名片</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -26,23 +26,23 @@
             width: 100vw;
             min-height: 100vh;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
             background: radial-gradient(circle at center, #0f0c29, #302b63, #24243e);
             padding: 50px 20px;
-            overflow-x: hidden;
+            overflow: hidden;
         }
 
-        /* 科技漸層背景光暈 */
+        /* 宇宙動態霓虹背景 */
         .universe::before {
             content: '';
             position: absolute;
             width: 200%;
             height: 200%;
             background: conic-gradient(from 0deg at 50% 50%, #ff007f, #7f00ff, #00f0ff, #00ff7f, #ff007f);
-            animation: rotateGlow 15s linear infinite;
-            opacity: 0.15;
-            filter: blur(80px);
+            animation: rotateGlow 20s linear infinite;
+            opacity: 0.12;
+            filter: blur(90px);
             z-index: 0;
         }
 
@@ -51,287 +51,261 @@
             100% { transform: rotate(360deg); }
         }
 
-        /* 懸浮科幻環圈 */
-        .sci-fi-ring {
-            position: absolute;
-            width: 700px;
-            height: 700px;
-            border: 2px dashed rgba(0, 240, 255, 0.15);
-            border-radius: 50%;
-            animation: spinRing 30s linear infinite;
-            pointer-events: none;
-            top: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1;
-        }
-
-        @keyframes spinRing {
-            0% { transform: translateX(-50%) rotate(0deg); }
-            100% { transform: translateX(-50%) rotate(360deg); }
-        }
-
-        /* 主容器佈局 */
-        .main-wrapper {
-            position: relative;
-            z-index: 2;
-            width: 100%;
-            max-width: 900px;
-            display: flex;
-            flex-direction: column;
-            gap: 40px;
-            align-items: center;
-        }
-
-        /* 液態玻璃名片區塊 */
-        .liquid-glass-card {
+        /* 頂級液態玻璃主容器 (整合官網內容) */
+        .liquid-glass-master {
             position: relative;
             width: 100%;
-            max-width: 480px;
-            border-radius: 30px;
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.2),
-                        inset 0 -1px 0 rgba(0, 0, 0, 0.5);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 40px 30px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.5s ease;
-        }
-
-        .liquid-glass-card:hover {
-            transform: scale(1.02);
-            box-shadow: 0 40px 80px rgba(0, 240, 255, 0.2),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+            max-width: 850px;
+            border-radius: 35px;
+            background: rgba(255, 255, 255, 0.025);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.25),
                         inset 0 -1px 0 rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            padding: 50px 40px;
+            overflow: hidden;
+            z-index: 2;
+            transition: transform 0.4s ease, box-shadow 0.4s ease;
         }
 
-        /* 內部動態液面與科技光波 */
+        .liquid-glass-master:hover {
+            box-shadow: 0 50px 120px rgba(0, 240, 255, 0.18),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+                        inset 0 -1px 0 rgba(0, 0, 0, 0.9);
+        }
+
+        /* 流動電浆光波背景 */
         .plasma-wave {
             position: absolute;
-            width: 150%;
-            height: 150%;
-            background: radial-gradient(circle, rgba(0,240,255,0.4) 0%, rgba(127,0,255,0.2) 50%, transparent 70%);
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0,240,255,0.25) 0%, rgba(127,0,255,0.15) 40%, transparent 70%);
             mix-blend-mode: screen;
             transition: transform 0.2s ease-out;
             pointer-events: none;
-            filter: blur(20px);
+            filter: blur(30px);
             z-index: 1;
         }
 
-        /* 互動式液面波紋點 */
-        .ripple {
-            position: absolute;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(0,240,255,0.4) 40%, transparent 70%);
-            transform: scale(0);
-            animation: rippleEffect 1s cubic-bezier(0, 0.2, 0.8, 1) forwards;
-            pointer-events: none;
-            z-index: 2;
-        }
-
-        @keyframes rippleEffect {
-            to {
-                transform: scale(4);
-                opacity: 0;
-            }
-        }
-
-        .card-content {
+        /* 內容層 */
+        .content-layer {
             position: relative;
             z-index: 3;
             width: 100%;
             display: flex;
             flex-direction: column;
+            gap: 35px;
+        }
+
+        /* 名片頂部：個人與身分 */
+        .card-top {
+            display: flex;
             align-items: center;
-            text-align: center;
+            gap: 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 30px;
         }
 
-        .company-tag {
-            font-size: 0.8rem;
-            letter-spacing: 3px;
-            color: #00f0ff;
-            text-shadow: 0 0 10px rgba(0,240,255,0.5);
-            font-weight: 700;
-            margin-bottom: 8px;
-            display: block;
-        }
-
-        .card-header h1 {
-            font-size: 2.2rem;
-            font-weight: 800;
-            letter-spacing: 2px;
-            background: linear-gradient(to right, #fff, #00f0ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 20px;
-        }
-
-        .avatar-frame {
+        .avatar-box {
             width: 90px;
             height: 90px;
             border-radius: 50%;
-            border: 2px solid rgba(0, 240, 255, 0.5);
-            background: rgba(0, 240, 255, 0.1);
+            border: 2px solid rgba(0, 240, 255, 0.6);
+            background: rgba(0, 240, 255, 0.08);
             display: flex;
             justify-content: center;
             align-items: center;
-            margin: 0 auto 15px;
-            box-shadow: 0 0 20px rgba(0,240,255,0.3);
+            box-shadow: 0 0 25px rgba(0,240,255,0.3);
+            flex-shrink: 0;
         }
 
-        .avatar-frame i {
+        .avatar-box i {
             font-size: 2.5rem;
             color: #00f0ff;
         }
 
-        .name-title {
-            font-size: 1.6rem;
+        .identity-info .company-tag {
+            font-size: 0.75rem;
+            letter-spacing: 3px;
+            color: #00f0ff;
             font-weight: 700;
             margin-bottom: 5px;
+            display: block;
+            text-shadow: 0 0 8px rgba(0,240,255,0.5);
         }
 
-        .role-title {
+        .identity-info h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            background: linear-gradient(to right, #fff, #00f0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 4px;
+        }
+
+        .identity-info .role {
             font-size: 0.95rem;
             color: #a5a2b0;
             letter-spacing: 1px;
         }
 
-        /* 官網內容區塊 */
-        .company-info-section {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 25px;
-            padding: 40px 35px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        }
-
-        .info-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #00f0ff;
-            margin-bottom: 20px;
-            border-left: 4px solid #00f0ff;
-            padding-left: 12px;
-            letter-spacing: 1px;
-        }
-
-        .info-grid {
+        /* 官網核心模組排版 */
+        .official-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 20px;
-            margin-bottom: 30px;
         }
 
-        .info-card {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 15px;
+        .module-card {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
             padding: 22px;
             transition: 0.3s;
+            position: relative;
+            overflow: hidden;
         }
 
-        .info-card:hover {
+        .module-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: #ff007f;
+            opacity: 0.8;
+        }
+
+        .module-card.tech::before { background: #00f0ff; }
+        .module-card.security::before { background: #7f00ff; }
+
+        .module-card:hover {
             border-color: rgba(0, 240, 255, 0.4);
-            transform: translateY(-3px);
-            box-shadow: 0 10px 25px rgba(0,240,255,0.15);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0,240,255,0.12);
         }
 
-        .info-card h3 {
+        .module-card h3 {
             font-size: 1.05rem;
-            color: #ff007f;
-            margin-bottom: 12px;
+            color: #fff;
+            margin-bottom: 10px;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        .info-card p {
-            font-size: 0.9rem;
-            color: #cfcfea;
-            line-height: 1.7;
+        .module-card h3 i {
+            color: #00f0ff;
         }
 
-        .ecosystem-list {
-            list-style: none;
+        .module-card p {
+            font-size: 0.88rem;
+            color: #bcbcd0;
+            line-height: 1.6;
+        }
+
+        /* 企業生態系橫幅 */
+        .ecosystem-banner {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 20px 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ecosystem-title {
+            font-size: 0.9rem;
+            color: #00f0ff;
+            letter-spacing: 1px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ecosystem-tags {
             display: flex;
             flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 15px;
+            gap: 12px;
         }
 
-        .ecosystem-item {
+        .eco-tag {
             background: rgba(127, 0, 255, 0.15);
-            border: 1, 1px solid rgba(127, 0, 255, 0.4);
             border: 1px solid rgba(127, 0, 255, 0.4);
-            padding: 10px 18px;
-            border-radius: 20px;
-            font-size: 0.9rem;
+            padding: 7px 15px;
+            border-radius: 15px;
+            font-size: 0.85rem;
             color: #fff;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
-        .ecosystem-item i {
+        .eco-tag i {
             color: #00f0ff;
+            font-size: 0.8rem;
+        }
+
+        /* 響應式微調 */
+        @media(max-width: 650px) {
+            .liquid-glass-master { padding: 30px 20px; }
+            .card-top { flex-direction: column; text-align: center; }
         }
     </style>
 </head>
 <body>
 
     <div class="universe">
-        <div class="sci-fi-ring"></div>
-        
-        <div class="main-wrapper">
-            <!-- 液態玻璃數位名片 -->
-            <div class="liquid-glass-card" id="glassContainer">
-                <div class="plasma-wave" id="plasmaWave"></div>
-                
-                <div class="card-content">
-                    <div class="card-header">
-                        <span class="company-tag">FR AI TECHNOLOGY</span>
-                        <h1>數位名片</h1>
-                    </div>
-
-                    <div class="avatar-frame">
+        <div class="liquid-glass-master" id="glassContainer">
+            <div class="plasma-wave" id="plasmaWave"></div>
+            
+            <div class="content-layer">
+                <!-- 頂部名片身分 -->
+                <div class="card-top">
+                    <div class="avatar-box">
                         <i class="fas fa-user-secret"></i>
                     </div>
-                    <div class="name-title">暗影</div>
-                    <div class="role-title">最高技術管理者 / 創辦人</div>
+                    <div class="identity-info">
+                        <span class="company-tag">FR AI TECHNOLOGY • 官方數位證件</span>
+                        <h1>暗影</h1>
+                        <div class="role">最高技術管理者 / 創辦人</div>
+                    </div>
                 </div>
-            </div>
 
-            <!-- FR 科技公司官網內容整合區塊 -->
-            <div class="company-info-section">
-                <div class="info-title">FR AI 科技公司 • 核心技術與優勢</div>
-                
-                <div class="info-grid">
-                    <div class="info-card">
+                <!-- 官網核心技術與架構內容整合 -->
+                <div class="official-grid">
+                    <div class="module-card tech">
                         <h3><i class="fas fa-microchip"></i> 核心技術領域</h3>
-                        <p>專注於現代前端網頁技術、系統級核心開發與高效能運算。從高互動性使用者介面設計到底層系統優化，提供全方位的頂級數位解決方案。</p>
+                        <p>專注於現代前端網頁技術、系統級核心開發與高效能運算。提供從高互動性使用者介面到底層系統優化的全方位解決方案[cite: 1]。</p>
                     </div>
-                    <div class="info-card">
-                        <h3><i class="fas fa-shield-alt"></i> 系統架構與防護</h3>
-                        <p>具備精簡的程式碼結構、毫秒級的硬體反應速度及完善的資安防禦機制。支援標準網頁建置、C/C++ 底層硬體通訊，以及高可靠度跨平台架構。</p>
+
+                    <div class="module-card security">
+                        <h3><i class="fas fa-shield-alt"></i> 系統優勢與架構</h3>
+                        <p>具備精簡程式碼結構、毫秒級硬體反應速度及完善資安防禦。支援標準網頁建置、C/C++ 底層硬體通訊與高可靠度跨平台架構[cite: 1]。</p>
                     </div>
                 </div>
 
-                <div class="info-title">企業生態系與合作夥伴</div>
-                <ul class="ecosystem-list">
-                    <li class="ecosystem-item"><i class="fas fa-network-wired"></i> FR AI 核心研發中心</li>
-                    <li class="ecosystem-item"><i class="fas fa-laptop-code"></i> RR 科技公司（創新軟體研發）</li>
-                    <li class="ecosystem-item"><i class="fas fa-paint-brush"></i> HLSS 專業網頁公司（UI/UX 與前端應用）</li>
-                </ul>
+                <!-- 企業生態系夥伴 -->
+                <div class="ecosystem-banner">
+                    <div class="ecosystem-title">
+                        <i class="fas fa-network-wired"></i> 企業生態系與跨界聯盟
+                    </div>
+                    <div class="ecosystem-tags">
+                        <div class="eco-tag"><i class="fas fa-server"></i> FR AI 核心研發中心</div>
+                        <div class="eco-tag"><i class="fas fa-laptop-code"></i> RR 科技公司（創新軟體研發）[cite: 1]</div>
+                        <div class="eco-tag"><i class="fas fa-paint-brush"></i> HLSS 專業網頁公司（UI/UX 與前端應用）[cite: 1]</div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -340,45 +314,22 @@
         const container = document.getElementById('glassContainer');
         const plasma = document.getElementById('plasmaWave');
 
-        // 滑鼠移動時液面與光波跟隨與流動
+        // 滑鼠移動互動：光波跟隨與精緻 3D 旋轉傾斜
         container.addEventListener('mousemove', (e) => {
             const rect = container.getBoundingClientRect();
             const x = e.clientX - rect.left - rect.width / 2;
             const y = e.clientY - rect.top - rect.height / 2;
 
-            plasma.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px) scale(1.2)`;
+            plasma.style.transform = `translate(${x * 0.25}px, ${y * 0.25}px) scale(1.15)`;
             
-            // 輕微 3D 傾斜效果
-            const tiltX = -(y / rect.height) * 15;
-            const tiltY = (x / rect.width) * 15;
-            container.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.02)`;
+            const tiltX = -(y / rect.height) * 10;
+            const tiltY = (x / rect.width) * 10;
+            container.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.01)`;
         });
 
         container.addEventListener('mouseleave', () => {
             plasma.style.transform = `translate(0px, 0px) scale(1)`;
             container.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)`;
-        });
-
-        // 點擊產生液面波動擴散
-        container.addEventListener('click', (e) => {
-            const rect = container.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            const ripple = document.createElement('div');
-            ripple.className = 'ripple';
-            ripple.style.left = `${x}px`;
-            ripple.style.top = `${y}px`;
-            ripple.style.width = '100px';
-            ripple.style.height = '100px';
-            ripple.style.marginLeft = '-50px';
-            ripple.style.marginTop = '-50px';
-
-            container.appendChild(ripple);
-
-            setTimeout(() => {
-                ripple.remove();
-            }, 1000);
         });
     </script>
 </body>
