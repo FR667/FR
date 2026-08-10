@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>暗影 - FR AI 科技公司 | 數位名片</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #03030c;
+            font-family: 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+        }
+
+        .universe {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle at center, #0f0c29, #302b63, #24243e);
+            overflow: hidden;
+        }
+
+        /* 科技漸層背景光暈 */
+        .universe::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg at 50% 50%, #ff007f, #7f00ff, #00f0ff, #00ff7f, #ff007f);
+            animation: rotateGlow 15s linear infinite;
+            opacity: 0.15;
+            filter: blur(80px);
+            z-index: 0;
+        }
+
+        @keyframes rotateGlow {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 液態玻璃容器 */
+        .liquid-glass-container {
+            position: relative;
+            width: 85vw;
+            height: 75vh;
+            max-width: 500px;
+            max-height: 650px;
+            border-radius: 30px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+                        inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 40px 30px;
+            overflow: hidden;
+            z-index: 2;
+            cursor: pointer;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.5s ease;
+        }
+
+        .liquid-glass-container:hover {
+            transform: scale(1.02);
+            box-shadow: 0 40px 80px rgba(0, 240, 255, 0.2),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+                        inset 0 -1px 0 rgba(0, 0, 0, 0.8);
+        }
+
+        /* 內部動態液面與科技光波 */
+        .plasma-wave {
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle, rgba(0,240,255,0.4) 0%, rgba(127,0,255,0.2) 50%, transparent 70%);
+            mix-blend-mode: screen;
+            transition: transform 0.2s ease-out;
+            pointer-events: none;
+            filter: blur(20px);
+            z-index: 1;
+        }
+
+        /* 核心能量球 */
+        .energy-core {
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00f0ff, #7f00ff, #ff007f);
+            background-size: 300% 300%;
+            animation: gradientShift 6s ease infinite, floatCore 4s ease-in-out infinite;
+            filter: blur(30px);
+            opacity: 0.6;
+            mix-blend-mode: color-dodge;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes floatCore {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, -20px) scale(1.1); }
+        }
+
+        /* 互動式液面波紋點 */
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(0,240,255,0.4) 40%, transparent 70%);
+            transform: scale(0);
+            animation: rippleEffect 1s cubic-bezier(0, 0.2, 0.8, 1) forwards;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        @keyframes rippleEffect {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        /* 懸浮科幻環圈 */
+        .sci-fi-ring {
+            position: absolute;
+            width: 350px;
+            height: 350px;
+            border: 2px dashed rgba(0, 240, 255, 0.3);
+            border-radius: 50%;
+            animation: spinRing 20s linear infinite;
+            pointer-events: none;
+        }
+
+        .sci-fi-ring:nth-child(2) {
+            width: 450px;
+            height: 450px;
+            border: 1px solid rgba(255, 0, 127, 0.2);
+            animation: spinRingReverse 25s linear infinite;
+        }
+
+        @keyframes spinRing {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes spinRingReverse {
+            0% { transform: rotate(360deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        /* 名片內容層 */
+        .card-content {
+            position: relative;
+            z-index: 3;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+            color: #ffffff;
+        }
+
+        .card-header .company-tag {
+            font-size: 0.8rem;
+            letter-spacing: 3px;
+            color: #00f0ff;
+            text-shadow: 0 0 10px rgba(0,240,255,0.5);
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .card-header h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: linear-gradient(to right, #fff, #00f0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .card-body {
+            margin: 20px 0;
+        }
+
+        .avatar-frame {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 240, 255, 0.5);
+            background: rgba(0, 240, 255, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 15px;
+            box-shadow: 0 0 20px rgba(0,240,255,0.3);
+        }
+
+        .avatar-frame i {
+            font-size: 2.5rem;
+            color: #00f0ff;
+        }
+
+        .name-title {
+            font-size: 1.6rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .role-title {
+            font-size: 0.95rem;
+            color: #a5a2b0;
+            letter-spacing: 1px;
+        }
+
+        .card-footer {
+            width: 100%;
+        }
+
+        .btn-official {
+            display: inline-block;
+            width: 100%;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #00f0ff, #7f00ff);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.95rem;
+            border-radius: 25px;
+            box-shadow: 0 5px 20px rgba(0, 240, 255, 0.3);
+            transition: 0.3s;
+            letter-spacing: 1px;
+        }
+
+        .btn-official:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 240, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="universe">
+        <div class="sci-fi-ring"></div>
+        <div class="sci-fi-ring"></div>
+        
+        <div class="liquid-glass-container" id="glassContainer">
+            <div class="energy-core"></div>
+            <div class="plasma-wave" id="plasmaWave"></div>
+            
+            <div class="card-content">
+                <div class="card-header">
+                    <span class="company-tag">FR AI TECHNOLOGY</span>
+                    <h1>數位名片</h1>
+                </div>
+
+                <div class="card-body">
+                    <div class="avatar-frame">
+                        <i class="fas fa-user-secret"></i>
+                    </div>
+                    <div class="name-title">暗影</div>
+                    <div class="role-title">最高技術管理者 / 創辦人</div>
+                </div>
+
+                <div class="card-footer">
+                    <!-- 點擊後可前往或檢視 FR 科技公司官網 -->
+                    <a href="#company-site" onclick="alert('歡迎造訪 FR AI 科技公司！')" class="btn-official">
+                        <i class="fas fa-globe"></i> 探索 FR 科技官網
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('glassContainer');
+        const plasma = document.getElementById('plasmaWave');
+
+        // 滑鼠移動時液面與光波跟隨與流動
+        container.addEventListener('mousemove', (e) => {
+            const rect = container.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+
+            plasma.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px) scale(1.2)`;
+            
+            // 輕微 3D 傾斜效果
+            const tiltX = -(y / rect.height) * 15;
+            const tiltY = (x / rect.width) * 15;
+            container.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.02)`;
+        });
+
+        container.addEventListener('mouseleave', () => {
+            plasma.style.transform = `translate(0px, 0px) scale(1)`;
+            container.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)`;
+        });
+
+        // 點擊產生液面波動擴散
+        container.addEventListener('click', (e) => {
+            const rect = container.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const ripple = document.createElement('div');
+            ripple.className = 'ripple';
+            ripple.style.left = `${x}px`;
+            ripple.style.top = `${y}px`;
+            ripple.style.width = '100px';
+            ripple.style.height = '100px';
+            ripple.style.marginLeft = '-50px';
+            ripple.style.marginTop = '-50px';
+
+            container.appendChild(ripple);
+
+            setTimeout(() => {
+                ripple.remove();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
