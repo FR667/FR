@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title></title>
+    <title>霓虹跑酷</title>
     <style>
         * {
             margin: 0;
@@ -133,39 +133,32 @@
 
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x020205);
-        scene.fog = new THREE.FogExp2(0x020205, 0.012);
+        scene.fog = new THREE.FogExp2(0x020205, 0.015);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
         // 燈光設置
-        const ambientLight = new THREE.AmbientLight(0x151a30, 2.5);
+        const ambientLight = new THREE.AmbientLight(0x151a30, 3.0);
         scene.add(ambientLight);
 
-        const dirLight = new THREE.DirectionalLight(0x00f3ff, 3.5);
+        const dirLight = new THREE.DirectionalLight(0x00f3ff, 4.0);
         dirLight.position.set(20, 50, 20);
         dirLight.castShadow = true;
         dirLight.shadow.mapSize.width = 2048;
         dirLight.shadow.mapSize.height = 2048;
-        dirLight.shadow.camera.near = 0.5;
-        dirLight.shadow.camera.far = 150;
-        const d = 35;
-        dirLight.shadow.camera.left = -d;
-        dirLight.shadow.camera.right = d;
-        dirLight.shadow.camera.top = d;
-        dirLight.shadow.camera.bottom = -d;
         scene.add(dirLight);
 
-        const pointLight = new THREE.PointLight(0xff0055, 5, 25);
+        const pointLight = new THREE.PointLight(0xff0055, 6, 30);
         scene.add(pointLight);
 
         // 材質
         const metalMaterial = new THREE.MeshStandardMaterial({ color: 0x111420, metalness: 0.9, roughness: 0.2 });
-        const cyanMat = new THREE.MeshStandardMaterial({ color: 0x00f3ff, emissive: 0x00f3ff, emissiveIntensity: 1.5 });
-        const pinkMat = new THREE.MeshStandardMaterial({ color: 0xff0055, emissive: 0xff0055, emissiveIntensity: 1.5 });
+        const cyanMat = new THREE.MeshStandardMaterial({ color: 0x00f3ff, emissive: 0x00f3ff, emissiveIntensity: 2.0 });
+        const pinkMat = new THREE.MeshStandardMaterial({ color: 0xff0055, emissive: 0xff0055, emissiveIntensity: 2.0 });
 
         // 玩家方塊
         const playerGeo = new THREE.BoxGeometry(1.2, 1.2, 1.2);
-        const playerMat = new THREE.MeshStandardMaterial({ color: 0x00f3ff, metalness: 0.8, roughness: 0.1, emissive: 0x003344, emissiveIntensity: 0.5 });
+        const playerMat = new THREE.MeshStandardMaterial({ color: 0x00f3ff, metalness: 0.8, roughness: 0.1, emissive: 0x005577, emissiveIntensity: 0.8 });
         const player = new THREE.Mesh(playerGeo, playerMat);
         player.castShadow = true;
         scene.add(player);
@@ -175,20 +168,18 @@
         const playerCore = new THREE.Mesh(coreGeo, coreMat);
         player.add(playerCore);
 
-        // 遊戲變數
+        // 遊戲變數（好玩又刺激的平衡）
         let playerPos = new THREE.Vector3(0, 6, 0);
         let playerVel = new THREE.Vector3(0, 0, 0);
-        const gravity = -0.022;
-        const jumpForce = 0.38;
-        const moveSpeed = 0.16;
+        const gravity = -0.014;  
+        const jumpForce = 0.35;  
+        const moveSpeed = 0.18;
         let isGrounded = false;
-        let jumpCount = 0; // 雙跳計數
+        let jumpCount = 0;
         const maxJumps = 2;
         let score = 0;
 
         const scoreEl = document.getElementById('ui-score');
-
-        // 輸入控制
         const keys = { w: false, a: false, s: false, d: false };
 
         function triggerJump() {
@@ -196,6 +187,24 @@
                 playerVel.y = jumpForce;
                 jumpCount++;
                 isGrounded = false;
+                createJumpEffect();
+            }
+        }
+
+        // 跳躍粒子特效
+        const particles = [];
+        function createJumpEffect() {
+            for (let i = 0; i < 8; i++) {
+                const pGeo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+                const pMat = new THREE.MeshBasicMaterial({ color: 0x00f3ff });
+                const pMesh = new THREE.Mesh(pGeo, pMat);
+                pMesh.position.copy(playerPos);
+                scene.add(pMesh);
+                particles.push({
+                    mesh: pMesh,
+                    vel: new THREE.Vector3((Math.random() - 0.5) * 0.2, Math.random() * 0.2, (Math.random() - 0.5) * 0.2),
+                    life: 20
+                });
             }
         }
 
@@ -214,7 +223,6 @@
             if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.d = false;
         });
 
-        // 手機螢幕按鈕綁定
         function bindMobBtn(id, keyName) {
             const btn = document.getElementById(id);
             btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyName] = true; });
@@ -230,7 +238,6 @@
         document.getElementById('btn-jump').addEventListener('touchstart', (e) => { e.preventDefault(); triggerJump(); });
         document.getElementById('btn-jump').addEventListener('mousedown', (e) => { e.preventDefault(); triggerJump(); });
 
-        // 板子系統 (街機滾動式生成)
         const platforms = [];
         const platformGeo = new THREE.BoxGeometry(1, 1, 1);
 
@@ -242,7 +249,7 @@
             mesh.receiveShadow = true;
             group.add(mesh);
 
-            const edge = new THREE.Mesh(new THREE.BoxGeometry(sx + 0.1, 0.1, sz + 0.1), Math.random() > 0.5 ? cyanMat : pinkMat);
+            const edge = new THREE.Mesh(new THREE.BoxGeometry(sx + 0.1, 0.1, sz + 0.1), Math.random() > 0.4 ? cyanMat : pinkMat);
             edge.position.y = 0.5;
             group.add(edge);
 
@@ -258,43 +265,49 @@
             });
         }
 
-        // 初始化初始關卡
-        spawnPlatform(0, 0, 0, 8, 8);
-        spawnPlatform(0, 1.5, -12, 6, 6);
-        spawnPlatform(3, 3, -24, 5, 5, true);
-        spawnPlatform(-3, 4.5, -36, 6, 6);
-        spawnPlatform(0, 6, -48, 5, 8);
+        spawnPlatform(0, 0, 0, 7, 7);
+        spawnPlatform(0, 1.2, -12, 5, 5);
+        spawnPlatform(3, 2.4, -24, 5, 5, true);
+        spawnPlatform(-3, 3.6, -36, 5, 5);
 
-        let nextSpawnZ = -60;
+        let nextSpawnZ = -48;
 
         function generateMorePlatforms() {
             while (nextSpawnZ > playerPos.z - 100) {
-                let x = (Math.random() - 0.5) * 12;
-                let y = (Math.random() - 0.5) * 4 + (-nextSpawnZ * 0.08); // 隨著距離逐漸爬升
-                let sx = Math.random() * 3 + 4;
-                let sz = Math.random() * 3 + 4;
-                let isMoving = Math.random() > 0.6;
+                let x = (Math.random() - 0.5) * 10;
+                let y = (Math.random() - 0.5) * 3 + (-nextSpawnZ * 0.05);
+                let sx = Math.random() * 2 + 4;
+                let sz = Math.random() * 2 + 4;
+                let isMoving = Math.random() > 0.4; // 提高動態平台的機率，增加刺激感！
                 spawnPlatform(x, y, nextSpawnZ, sx, sz, isMoving);
                 nextSpawnZ -= 12;
             }
         }
 
-        // 遊戲主循環
         let clock = new THREE.Clock();
 
         function animate() {
             requestAnimationFrame(animate);
-            let dt = clock.getDelta();
             let time = clock.getElapsedTime();
 
-            // 移動平台運算
             platforms.forEach(p => {
                 if (p.isMoving) {
-                    p.mesh.position.x = p.x + Math.sin(time * 2.5 + p.moveOffset) * 4;
+                    p.mesh.position.x = p.x + Math.sin(time * 3.0 + p.moveOffset) * 4.5;
                 }
             });
 
-            // WASD 移動向量（固定世界軸向，操作直覺流暢）
+            // 更新粒子
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.mesh.position.add(p.vel);
+                p.life--;
+                p.mesh.scale.multiplyScalar(0.9);
+                if (p.life <= 0) {
+                    scene.remove(p.mesh);
+                    particles.splice(i, 1);
+                }
+            }
+
             let moveDir = new THREE.Vector3(0, 0, 0);
             if (keys.w) moveDir.z -= 1;
             if (keys.s) moveDir.z += 1;
@@ -305,11 +318,9 @@
             playerVel.x = moveDir.x * moveSpeed;
             playerVel.z = moveDir.z * moveSpeed;
 
-            // 套用重力
             playerVel.y += gravity;
             playerPos.add(playerVel);
 
-            // 碰撞與積分判定
             isGrounded = false;
             let playerBox = {
                 minX: playerPos.x - 0.6, maxX: playerPos.x + 0.6,
@@ -318,7 +329,7 @@
             };
 
             platforms.forEach(p => {
-                let pWorldX = p.isMoving ? p.x + Math.sin(time * 2.5 + p.moveOffset) * 4 : p.x;
+                let pWorldX = p.isMoving ? p.x + Math.sin(time * 3.0 + p.moveOffset) * 4.5 : p.x;
                 let pMinX = pWorldX - p.sx / 2, pMaxX = pWorldX + p.sx / 2;
                 let pMinY = p.y - 0.5, pMaxY = p.y + 0.5;
                 let pMinZ = p.z - p.sz / 2, pMaxZ = p.z + p.sz / 2;
@@ -330,9 +341,8 @@
                         playerPos.y = pMaxY + 0.6;
                         playerVel.y = 0;
                         isGrounded = true;
-                        jumpCount = 0; // 落地重置雙跳
+                        jumpCount = 0;
 
-                        // 跳到新板子加一分
                         if (!p.scored) {
                             p.scored = true;
                             score++;
@@ -342,7 +352,7 @@
                 }
             });
 
-            // 掉落深淵重置
+            // 掉落重置（硬核挑戰：掉下去重新挑戰高分！）
             if (playerPos.y < -25) {
                 playerPos.set(0, 6, 0);
                 playerVel.set(0, 0, 0);
@@ -351,19 +361,18 @@
             }
 
             player.position.copy(playerPos);
-            player.rotation.y += 0.02;
+            player.rotation.y += 0.03;
+            player.rotation.x += 0.01;
 
-            // 動態生成前方平台
             generateMorePlatforms();
 
-            // 攝影機完美跟隨
             let targetCamX = playerPos.x;
             let targetCamY = playerPos.y + 6;
             let targetCamZ = playerPos.z + 12;
 
-            camera.position.x += (targetCamX - camera.position.x) * 0.1;
-            camera.position.y += (targetCamY - camera.position.y) * 0.1;
-            camera.position.z += (targetCamZ - camera.position.z) * 0.1;
+            camera.position.x += (targetCamX - camera.position.x) * 0.12;
+            camera.position.y += (targetCamY - camera.position.y) * 0.12;
+            camera.position.z += (targetCamZ - camera.position.z) * 0.12;
             camera.lookAt(playerPos.x, playerPos.y, playerPos.z - 4);
 
             pointLight.position.copy(playerPos);
