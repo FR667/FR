@@ -2,15 +2,16 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>3D 第一人稱跑酷原型</title>
+    <title>3D 射擊遊戲原型</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #000;
+            background-color: #111;
             font-family: monospace;
+            user-select: none;
         }
-        #info {
+        #ui {
             position: absolute;
             top: 20px;
             left: 20px;
@@ -19,15 +20,16 @@
             padding: 15px;
             border-radius: 8px;
             pointer-events: none;
-            line-height: 1.5;
+            line-height: 1.6;
+            font-size: 16px;
         }
         #crosshair {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 8px;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.8);
+            width: 10px;
+            height: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.8);
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
@@ -40,28 +42,36 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.85);
             color: white;
             cursor: pointer;
             z-index: 10;
         }
-        #instructions h1 { margin: 0 0 10px 0; color: #00ffcc; }
+        #instructions h1 { margin: 0 0 10px 0; color: #ff3333; }
+        #damage-flash {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,0,0,0);
+            pointer-events: none;
+            transition: background 0.1s;
+        }
     </style>
 </head>
 <body>
 
+    <div id="damage-flash"></div>
     <div id="instructions">
-        <h1>3D 跑酷挑戰</h1>
-        <p>點擊此處開始遊戲</p>
-        <p>[W][A][S][D] 移動 | [空白鍵] 跳躍 | [滑鼠] 視角</p>
+        <h1>3D 射擊靶場挑戰</h1>
+        <p>點擊此處進入遊戲</p>
+        <p>[滑鼠移動] 瞄準 | [滑鼠左鍵] 開槍 | [R] 換彈夾</p>
     </div>
 
     <div id="crosshair"></div>
     
-    <div id="info">
-        狀態: <span id="status" style="color: #00ffcc;">準備開始</span><br>
-        速度: <span id="speed">0.0</span><br>
-        高度: <span id="height">0.0</span>
+    <div id="ui">
+        分數: <span id="score" style="color: #00ffcc; font-weight: bold;">0</span><br>
+        彈藥: <span id="ammo">30</span> / 30<br>
+        狀態: <span id="status" style="color: #00ffcc;">準備就緒</span>
     </div>
 
     <!-- 引入 Three.js -->
@@ -69,16 +79,17 @@
 
     <script>
         let scene, camera, renderer;
-        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
-        let canJump = false;
-
-        let velocity = new THREE.Vector3();
-        let direction = new THREE.Vector3();
-
-        let prevTime = performance.now();
-        const platforms = [];
+        let targets = [];
+        let score = 0;
+        let ammo = 30;
+        let maxAmmo = 30;
+        let isReloading = false;
+        let gunMesh, muzzleFlash;
 
         const instructions = document.getElementById('instructions');
+        const damageFlash = document.getElementById('damage-flash');
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2(0, 0); // 準心永遠在畫面正中心 (0,0)
 
         init();
         animate();
@@ -86,26 +97,32 @@
         function init() {
             // 1. 場景與相機
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x111122);
-            scene.fog = new THREE.FogExp2(0x111122, 0.015);
+            scene.background = new THREE.Color(0x1a1a2e);
+            scene.fog = new THREE.FogExp2(0x1a1a2e, 0.02);
 
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 5, 10);
+            camera.position.set(0, 1.6, 5);
 
             // 2. 燈光
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
             scene.add(ambientLight);
 
             const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            dirLight.position.set(20, 40, 20);
+            dirLight.position.set(10, 20, 10);
             scene.add(dirLight);
 
             // 3. 渲染器
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
             document.body.appendChild(renderer.domElement);
 
-            // 4. 指針鎖定控制 (PointerLock)
+            // 4. 建立地圖與靶標
+            createEnvironment();
+            createWeapon();
+            spawnTargets();
+
+            // 5. 事件監聽
             instructions.addEventListener('click', () => {
                 renderer.domElement.requestPointerLock();
             });
@@ -119,59 +136,99 @@
             });
 
             document.addEventListener('mousemove', onMouseMove, false);
+            document.addEventListener('mousedown', onMouseDown, false);
             document.addEventListener('keydown', onKeyDown, false);
-            document.addEventListener('keyup', onKeyUp, false);
-
-            // 5. 建立關卡 (平台陣列)
-            createLevel();
-
             window.addEventListener('resize', onWindowResize, false);
         }
 
-        // 建立跑酷關卡
-        function createLevel() {
-            const material = new THREE.MeshStandardMaterial({ 
-                color: 0x223344, 
-                roughness: 0.4,
-                metalness: 0.2
-            });
-            const hazardMaterial = new THREE.MeshStandardMaterial({ color: 0xff3333 });
-            const startMaterial = new THREE.MeshStandardMaterial({ color: 0x00ffcc });
+        // 建立簡單的靶場環境
+        function createEnvironment() {
+            // 地板
+            const floorGeo = new THREE.PlaneGeometry(100, 100);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.8 });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            scene.add(floor);
 
-            // 起始平台
-            addPlatform(0, 0, 0, 15, 2, 15, startMaterial);
-
-            // 隨機生成一系列跳躍平台
-            let zPos = -20;
-            let xPos = 0;
-            let yPos = 0;
-
-            for (let i = 0; i < 20; i++) {
-                xPos += (Math.random() - 0.5) * 12;
-                yPos += (Math.random() * 4) - 1; // 隨機高低起伏
-                zPos -= 15 + Math.random() * 5;
-
-                const width = Math.max(4, 10 - i * 0.2);
-                const depth = Math.max(4, 10 - i * 0.2);
-
-                addPlatform(xPos, yPos, zPos, width, 2, depth, material);
-            }
-
-            // 終點平台
-            addPlatform(0, yPos + 2, zPos - 20, 10, 2, 10, startMaterial);
+            // 牆壁
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0x333344 });
+            const backWall = new THREE.Mesh(new THREE.BoxGeometry(100, 20, 1), wallMat);
+            backWall.position.set(0, 10, -30);
+            scene.add(backWall);
         }
 
-        function addPlatform(x, y, z, w, h, d, mat) {
-            const geometry = new THREE.BoxGeometry(w, h, d);
-            const mesh = new THREE.Mesh(geometry, mat);
-            mesh.position.set(x, y, z);
-            scene.add(mesh);
+        // 建立一把簡單的第一人稱槍枝模型
+        function createWeapon() {
+            const gunGroup = new THREE.Group();
 
-            // 儲存邊界數據用於碰撞檢測
-            platforms.push({
-                mesh: mesh,
-                box: new THREE.Box3().setFromObject(mesh)
-            });
+            // 槍身
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.8, roughness: 0.2 });
+            const bodyGeo = new THREE.BoxGeometry(0.15, 0.2, 0.8);
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            gunGroup.add(body);
+
+            // 槍管
+            const barrelMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.9 });
+            const barrelGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.6, 16);
+            const barrel = new THREE.Mesh(barrelGeo, barrelMat);
+            barrel.rotation.x = Math.PI / 2;
+            barrel.position.set(0, 0.05, -0.6);
+            gunGroup.add(barrel);
+
+            // 開火閃光特效 (預設隱藏)
+            const flashGeo = new THREE.SphereGeometry(0.08, 8, 8);
+            const flashMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+            muzzleFlash = new THREE.Mesh(flashGeo, flashMat);
+            muzzleFlash.position.set(0, 0.05, -0.9);
+            muzzleFlash.visible = false;
+            gunGroup.add(muzzleFlash);
+
+            // 固定在相機視角上 (製造第一人稱手持感)
+            gunGroup.position.set(0.3, -0.3, -0.5);
+            camera.add(gunGroup);
+            scene.add(camera);
+            gunMesh = gunGroup;
+        }
+
+        // 生成隨機靶子
+        function spawnTargets() {
+            for (let i = 0; i < 5; i++) {
+                createSingleTarget();
+            }
+        }
+
+        function createSingleTarget() {
+            const targetGroup = new THREE.Group();
+            
+            // 外環 (紅)
+            const outerGeo = new THREE.CylinderGeometry(1, 1, 0.2, 32);
+            const outerMat = new THREE.MeshStandardMaterial({ color: 0xcc2222 });
+            const outer = new THREE.Mesh(outerGeo, outerMat);
+            outer.rotation.x = Math.PI / 2;
+            targetGroup.add(outer);
+
+            // 內心 (白)
+            const innerGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.22, 32);
+            const innerMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            const inner = new THREE.Mesh(innerGeo, innerMat);
+            inner.rotation.x = Math.PI / 2;
+            targetGroup.add(inner);
+
+            // 隨機位置
+            resetTargetPosition(targetGroup);
+            scene.add(targetGroup);
+            targets.push(targetGroup);
+        }
+
+        function resetTargetPosition(target) {
+            target.position.x = (Math.random() - 0.5) * 30;
+            target.position.y = Math.random() * 6 + 1;
+            target.position.z = -Math.random() * 20 - 5;
+            // 給予隨機移動速度
+            target.userData = { 
+                speed: (Math.random() * 2 + 1) * (Math.random() > 0.5 ? 1 : -1),
+                limitX: 15
+            };
         }
 
         // 滑鼠視角控制
@@ -181,41 +238,84 @@
         function onMouseMove(event) {
             if (document.pointerLockElement !== renderer.domElement) return;
 
-            const movementX = event.movementX || event.mozMovementX || event.webKitMovementX || 0;
-            const movementY = event.movementY || event.mozMovementY || event.webKitMovementY || 0;
+            const movementX = event.movementX || event.mouseMovementX || 0;
+            const movementY = event.movementY || event.mouseMovementY || 0;
 
             euler.setFromQuaternion(camera.quaternion);
-
             euler.y -= movementX * 0.002;
             euler.x -= movementY * 0.002;
-
             euler.x = Math.max(-PI_2, Math.min(PI_2, euler.x));
-
             camera.quaternion.setFromEuler(euler);
         }
 
-        function onKeyDown(event) {
-            switch (event.code) {
-                case 'KeyW': moveForward = true; break;
-                case 'KeyS': moveBackward = true; break;
-                case 'KeyA': moveLeft = true; break;
-                case 'KeyD': moveRight = true; break;
-                case 'Space':
-                    if (canJump) {
-                        velocity.y += 12; // 跳躍力道
-                        canJump = false;
+        // 開槍動作
+        function onMouseDown(event) {
+            if (document.pointerLockElement !== renderer.domElement) return;
+            if (event.button !== 0) return; // 僅限左鍵
+
+            if (isReloading) return;
+
+            if (ammo <= 0) {
+                triggerReload();
+                return;
+            }
+
+            ammo--;
+            updateUI();
+
+            // 槍口閃光效果
+            muzzleFlash.visible = true;
+            setTimeout(() => { muzzleFlash.visible = false; }, 50);
+
+            // 射擊後座力視覺回饋 (微幅抬起槍枝)
+            gunMesh.position.z += 0.05;
+            setTimeout(() => { gunMesh.position.z -= 0.05; }, 80);
+
+            // 射線檢測 (Raycasting) 從畫面正中心發射
+            raycaster.setFromCamera(mouse, camera);
+            
+            // 收集所有靶子的碰撞網格
+            const intersects = raycaster.intersectObjects(scene.children, true);
+
+            if (intersects.length > 0) {
+                // 找出擊中的物件所屬的群組 (Target)
+                let hitObject = intersects[0].object;
+                
+                for (let target of targets) {
+                    if (target.children.includes(hitObject)) {
+                        score += 100;
+                        updateUI();
+                        // 擊中後重置靶子位置
+                        resetTargetPosition(target);
+                        break;
                     }
-                    break;
+                }
             }
         }
 
-        function onKeyUp(event) {
-            switch (event.code) {
-                case 'KeyW': moveForward = false; break;
-                case 'KeyS': moveBackward = false; break;
-                case 'KeyA': moveLeft = false; break;
-                case 'KeyD': moveRight = false; break;
+        function onKeyDown(event) {
+            if (event.code === 'KeyR' && !isReloading && ammo < maxAmmo) {
+                triggerReload();
             }
+        }
+
+        function triggerReload() {
+            isReloading = true;
+            document.getElementById('status').innerText = "換彈中...";
+            document.getElementById('status').style.color = "#ffcc00";
+
+            setTimeout(() => {
+                ammo = maxAmmo;
+                isReloading = false;
+                updateUI();
+                document.getElementById('status').innerText = "準備就緒";
+                document.getElementById('status').style.color = "#00ffcc";
+            }, 1200);
+        }
+
+        function updateUI() {
+            document.getElementById('score').innerText = score;
+            document.getElementById('ammo').innerText = ammo;
         }
 
         function onWindowResize() {
@@ -225,75 +325,21 @@
         }
 
         // 遊戲主迴圈
+        const clock = new THREE.Clock();
+
         function animate() {
             requestAnimationFrame(animate);
 
-            const time = performance.now();
-            const delta = (time - prevTime) / 1000;
+            const delta = clock.getDelta();
 
-            if (document.pointerLockElement === renderer.domElement) {
-                // 1. 套用重力
-                velocity.y -= 30 * delta;
-
-                // 2. 移動方向計算
-                direction.z = Number(moveForward) - Number(moveBackward);
-                direction.x = Number(moveRight) - Number(moveLeft);
-                direction.normalize(); // 確保斜向移動速度不變快
-
-                // 空中加速與地面移動摩擦力
-                const speedMultiplier = canJump ? 400.0 : 150.0; 
-
-                if (moveForward || moveBackward) velocity.z -= direction.z * speedMultiplier * delta;
-                if (moveLeft || moveRight) velocity.x -= direction.x * speedMultiplier * delta;
-
-                // 摩擦力減速
-                if (canJump) {
-                    velocity.x *= 0.85;
-                    velocity.z *= 0.85;
-                } else {
-                    velocity.x *= 0.98; // 空中維持慣性 (Bhop 核心)
-                    velocity.z *= 0.98;
+            // 讓靶子左右移動增加挑戰性
+            for (let target of targets) {
+                target.position.x += target.userData.speed * delta;
+                if (target.position.x > target.userData.limitX || target.position.x < -target.userData.limitX) {
+                    target.userData.speed *= -1; // 碰到邊界折返
                 }
-
-                // 3. 套用位移
-                camera.translateX(-velocity.x * delta);
-                camera.translateZ(velocity.z * delta);
-                camera.position.y += velocity.y * delta;
-
-                // 4. 簡易 AABB 碰撞與平台檢測
-                canJump = false;
-                const playerBox = new THREE.Box3(
-                    new THREE.Vector3(camera.position.x - 0.6, camera.position.y - 1.8, camera.position.z - 0.6),
-                    new THREE.Vector3(camera.position.x + 0.6, camera.position.y, camera.position.z + 0.6)
-                );
-
-                for (let i = 0; i < platforms.length; i++) {
-                    const p = platforms[i];
-                    if (playerBox.intersectsBox(p.box)) {
-                        // 檢測是否落在平台上方
-                        const pTop = p.mesh.position.y + 1;
-                        if (camera.position.y >= pTop - 0.5 && velocity.y <= 0) {
-                            camera.position.y = pTop + 1.8;
-                            velocity.y = 0;
-                            canJump = true;
-                        }
-                    }
-                }
-
-                // 5. 掉落死亡重置
-                if (camera.position.y < -30) {
-                    camera.position.set(0, 5, 10);
-                    velocity.set(0, 0, 0);
-                }
-
-                // 更新 UI 數據
-                document.getElementById('speed').innerText = Math.sqrt(velocity.x**2 + velocity.z**2).toFixed(1);
-                document.getElementById('height').innerText = camera.position.y.toFixed(1);
-                document.getElementById('status').innerText = canJump ? "在地面 (可跳躍)" : "空中 (慣性滑行)";
-                document.getElementById('status').style.color = canJump ? "#00ffcc" : "#ffcc00";
             }
 
-            prevTime = time;
             renderer.render(scene, camera);
         }
     </script>
