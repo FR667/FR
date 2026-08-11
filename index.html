@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -14,19 +14,113 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
-            background-color: #050508;
+            background-color: #020205;
             font-family: monospace;
             user-select: none;
+            -webkit-user-select: none;
         }
         canvas {
             display: block;
             width: 100vw;
             height: 100vh;
         }
+        #ui-score {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #00f3ff;
+            font-size: 42px;
+            font-weight: bold;
+            text-shadow: 0 0 15px rgba(0, 243, 255, 0.8);
+            pointer-events: none;
+            letter-spacing: 2px;
+        }
+        #mobile-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 220px;
+            display: none;
+            pointer-events: none;
+            justify-content: space-between;
+            padding: 20px 30px;
+        }
+        @media (pointer: coarse) {
+            #mobile-controls {
+                display: flex;
+            }
+        }
+        .d-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(2, 60px);
+            gap: 10px;
+            pointer-events: auto;
+            align-self: flex-end;
+        }
+        .mob-btn {
+            background: rgba(0, 243, 255, 0.15);
+            border: 2px solid rgba(0, 243, 255, 0.6);
+            color: #00f3ff;
+            font-size: 20px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+            outline: none;
+        }
+        .mob-btn:active {
+            background: rgba(0, 243, 255, 0.4);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.8);
+        }
+        #btn-w { grid-column: 2; grid-row: 1; }
+        #btn-a { grid-column: 1; grid-row: 2; }
+        #btn-s { grid-column: 2; grid-row: 2; }
+        #btn-d { grid-column: 3; grid-row: 2; }
+
+        #btn-jump {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: rgba(255, 0, 85, 0.2);
+            border: 2px solid rgba(255, 0, 85, 0.7);
+            color: #ff0055;
+            font-size: 18px;
+            font-weight: bold;
+            pointer-events: auto;
+            align-self: flex-end;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.3);
+            outline: none;
+        }
+        #btn-jump:active {
+            background: rgba(255, 0, 85, 0.5);
+            box-shadow: 0 0 25px rgba(255, 0, 85, 0.9);
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
+
+    <div id="ui-score">0</div>
+
+    <div id="mobile-controls">
+        <div class="d-pad">
+            <button class="mob-btn" id="btn-w">▲</button>
+            <button class="mob-btn" id="btn-a">◀</button>
+            <button class="mob-btn" id="btn-s">▼</button>
+            <button class="mob-btn" id="btn-d">▶</button>
+        </div>
+        <button class="mob-btn" id="btn-jump">跳躍</button>
+    </div>
+
     <canvas id="gameCanvas"></canvas>
 
     <script>
@@ -36,206 +130,156 @@
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.2;
 
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x050508);
-        scene.fog = new THREE.FogExp2(0x050508, 0.015);
+        scene.background = new THREE.Color(0x020205);
+        scene.fog = new THREE.FogExp2(0x020205, 0.012);
 
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-        // 燈光系統
-        const ambientLight = new THREE.AmbientLight(0x101525, 2.0);
+        // 燈光設置
+        const ambientLight = new THREE.AmbientLight(0x151a30, 2.5);
         scene.add(ambientLight);
 
-        const dirLight = new THREE.DirectionalLight(0x00f3ff, 3.0);
-        dirLight.position.set(20, 40, 20);
+        const dirLight = new THREE.DirectionalLight(0x00f3ff, 3.5);
+        dirLight.position.set(20, 50, 20);
         dirLight.castShadow = true;
         dirLight.shadow.mapSize.width = 2048;
         dirLight.shadow.mapSize.height = 2048;
         dirLight.shadow.camera.near = 0.5;
         dirLight.shadow.camera.far = 150;
-        const d = 30;
+        const d = 35;
         dirLight.shadow.camera.left = -d;
         dirLight.shadow.camera.right = d;
         dirLight.shadow.camera.top = d;
         dirLight.shadow.camera.bottom = -d;
         scene.add(dirLight);
 
-        const pointLight = new THREE.PointLight(0xff0055, 4, 30);
-        pointLight.position.set(0, 5, 0);
+        const pointLight = new THREE.PointLight(0xff0055, 5, 25);
         scene.add(pointLight);
 
-        // 金屬材質定義
-        const metalMaterial = new THREE.MeshStandardMaterial({
-            color: 0x111318,
-            metalness: 0.95,
-            roughness: 0.15,
-            wireframe: false
-        });
+        // 材質
+        const metalMaterial = new THREE.MeshStandardMaterial({ color: 0x111420, metalness: 0.9, roughness: 0.2 });
+        const cyanMat = new THREE.MeshStandardMaterial({ color: 0x00f3ff, emissive: 0x00f3ff, emissiveIntensity: 1.5 });
+        const pinkMat = new THREE.MeshStandardMaterial({ color: 0xff0055, emissive: 0xff0055, emissiveIntensity: 1.5 });
 
-        const neonCyanMaterial = new THREE.MeshStandardMaterial({
-            color: 0x00f3ff,
-            emissive: 0x00f3ff,
-            emissiveIntensity: 2.0,
-            metalness: 0.2,
-            roughness: 0.1
-        });
-
-        const neonPinkMaterial = new THREE.MeshStandardMaterial({
-            color: 0xff0055,
-            emissive: 0xff0055,
-            emissiveIntensity: 2.0,
-            metalness: 0.2,
-            roughness: 0.1
-        });
-
-        // 玩家物件 (金屬方塊)
+        // 玩家方塊
         const playerGeo = new THREE.BoxGeometry(1.2, 1.2, 1.2);
-        const playerMat = new THREE.MeshStandardMaterial({
-            color: 0x00f3ff,
-            metalness: 0.9,
-            roughness: 0.1,
-            emissive: 0x004455,
-            emissiveIntensity: 0.5
-        });
+        const playerMat = new THREE.MeshStandardMaterial({ color: 0x00f3ff, metalness: 0.8, roughness: 0.1, emissive: 0x003344, emissiveIntensity: 0.5 });
         const player = new THREE.Mesh(playerGeo, playerMat);
         player.castShadow = true;
-        player.receiveShadow = true;
         scene.add(player);
 
-        // 玩家發光內核
-        const coreGeo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
+        const coreGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
         const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
         const playerCore = new THREE.Mesh(coreGeo, coreMat);
         player.add(playerCore);
 
-        // 物理與遊戲狀態
-        let playerPos = new THREE.Vector3(0, 5, 0);
+        // 遊戲變數
+        let playerPos = new THREE.Vector3(0, 6, 0);
         let playerVel = new THREE.Vector3(0, 0, 0);
-        const gravity = -0.025;
-        const jumpForce = 0.42;
-        const moveSpeed = 0.18;
+        const gravity = -0.022;
+        const jumpForce = 0.38;
+        const moveSpeed = 0.16;
         let isGrounded = false;
+        let jumpCount = 0; // 雙跳計數
+        const maxJumps = 2;
+        let score = 0;
+
+        const scoreEl = document.getElementById('ui-score');
 
         // 輸入控制
-        const keys = { w: false, a: false, s: false, d: false, space: false };
+        const keys = { w: false, a: false, s: false, d: false };
+
+        function triggerJump() {
+            if (jumpCount < maxJumps) {
+                playerVel.y = jumpForce;
+                jumpCount++;
+                isGrounded = false;
+            }
+        }
+
         window.addEventListener('keydown', (e) => {
             if (e.code === 'KeyW' || e.code === 'ArrowUp') keys.w = true;
             if (e.code === 'KeyS' || e.code === 'ArrowDown') keys.s = true;
             if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.a = true;
             if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.d = true;
-            if (e.code === 'Space') {
-                if (isGrounded) {
-                    playerVel.y = jumpForce;
-                    isGrounded = false;
-                }
-                keys.space = true;
-            }
+            if (e.code === 'Space') triggerJump();
         });
+
         window.addEventListener('keyup', (e) => {
             if (e.code === 'KeyW' || e.code === 'ArrowUp') keys.w = false;
             if (e.code === 'KeyS' || e.code === 'ArrowDown') keys.s = false;
             if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.a = false;
             if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.d = false;
-            if (e.code === 'Space') keys.space = false;
         });
 
-        // 滑鼠視角控制
-        let isMouseDown = false;
-        let mouseX = 0, mouseY = 0;
-        let cameraAngleX = 0;
-        let cameraAngleY = 0.3;
+        // 手機螢幕按鈕綁定
+        function bindMobBtn(id, keyName) {
+            const btn = document.getElementById(id);
+            btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyName] = true; });
+            btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyName] = false; });
+            btn.addEventListener('mousedown', (e) => { e.preventDefault(); keys[keyName] = true; });
+            btn.addEventListener('mouseup', (e) => { e.preventDefault(); keys[keyName] = false; });
+        }
+        bindMobBtn('btn-w', 'w');
+        bindMobBtn('btn-a', 'a');
+        bindMobBtn('btn-s', 's');
+        bindMobBtn('btn-d', 'd');
 
-        window.addEventListener('mousedown', () => isMouseDown = true);
-        window.addEventListener('mouseup', () => isMouseDown = false);
-        window.addEventListener('mousemove', (e) => {
-            if (isMouseDown) {
-                cameraAngleX -= e.movementX * 0.005;
-                cameraAngleY = Math.max(0.1, Math.min(1.2, cameraAngleY - e.movementY * 0.005));
-            }
-        });
+        document.getElementById('btn-jump').addEventListener('touchstart', (e) => { e.preventDefault(); triggerJump(); });
+        document.getElementById('btn-jump').addEventListener('mousedown', (e) => { e.preventDefault(); triggerJump(); });
 
-        // 觸控支援
-        let touchX = 0, touchY = 0;
-        window.addEventListener('touchstart', (e) => {
-            if (e.touches.length > 0) {
-                touchX = e.touches[0].clientX;
-                touchY = e.touches[0].clientY;
-                if (isGrounded) {
-                    playerVel.y = jumpForce;
-                    isGrounded = false;
-                }
-            }
-        }, {passive: true});
-
-        window.addEventListener('touchmove', (e) => {
-            if (e.touches.length > 0) {
-                let dx = e.touches[0].clientX - touchX;
-                let dy = e.touches[0].clientY - touchY;
-                cameraAngleX -= dx * 0.005;
-                cameraAngleY = Math.max(0.1, Math.min(1.2, cameraAngleY - dy * 0.005));
-                touchX = e.touches[0].clientX;
-                touchY = e.touches[0].clientY;
-            }
-        }, {passive: true});
-
-        // 產生地圖平台
+        // 板子系統 (街機滾動式生成)
         const platforms = [];
         const platformGeo = new THREE.BoxGeometry(1, 1, 1);
 
-        function createPlatform(x, y, z, sx, sy, sz, isMoving = false) {
+        function spawnPlatform(x, y, z, sx, sz, isMoving = false) {
             const group = new THREE.Group();
-            
-            // 主金屬體
             const mesh = new THREE.Mesh(platformGeo, metalMaterial);
-            mesh.scale.set(sx, sy, sz);
+            mesh.scale.set(sx, 1, sz);
             mesh.castShadow = true;
             mesh.receiveShadow = true;
             group.add(mesh);
 
-            // 霓虹邊框裝飾
-            const edgeGeo = new THREE.BoxGeometry(sx + 0.1, 0.1, sz + 0.1);
-            const edgeMesh = new THREE.Mesh(edgeGeo, Math.random() > 0.5 ? neonCyanMaterial : neonPinkMaterial);
-            edgeMesh.position.y = sy / 2;
-            group.add(edgeMesh);
+            const edge = new THREE.Mesh(new THREE.BoxGeometry(sx + 0.1, 0.1, sz + 0.1), Math.random() > 0.5 ? cyanMat : pinkMat);
+            edge.position.y = 0.5;
+            group.add(edge);
 
             group.position.set(x, y, z);
             scene.add(group);
 
             platforms.push({
                 mesh: group,
-                x, y, z, sx, sy, sz,
+                x, y, z, sx, sz,
                 isMoving,
-                moveOffset: Math.random() * Math.PI * 2
+                moveOffset: Math.random() * Math.PI * 2,
+                scored: false
             });
         }
 
-        // 建造無限跑酷關卡
-        createPlatform(0, 0, 0, 8, 1, 8);
-        createPlatform(0, 0, -12, 6, 1, 6);
-        createPlatform(5, 1.5, -22, 5, 1, 5, true);
-        createPlatform(-4, 3, -32, 6, 1, 6);
-        createPlatform(0, 4.5, -44, 5, 1, 10);
-        createPlatform(-6, 6, -58, 5, 1, 5);
-        createPlatform(4, 7.5, -70, 6, 1, 6, true);
-        createPlatform(0, 9, -84, 8, 1, 12);
+        // 初始化初始關卡
+        spawnPlatform(0, 0, 0, 8, 8);
+        spawnPlatform(0, 1.5, -12, 6, 6);
+        spawnPlatform(3, 3, -24, 5, 5, true);
+        spawnPlatform(-3, 4.5, -36, 6, 6);
+        spawnPlatform(0, 6, -48, 5, 8);
 
-        // 背景動態霓虹柱
-        for (let i = 0; i < 40; i++) {
-            const h = Math.random() * 20 + 10;
-            const pillarGeo = new THREE.BoxGeometry(1, h, 1);
-            const pillar = new THREE.Mesh(pillarGeo, Math.random() > 0.5 ? neonCyanMaterial : neonPinkMaterial);
-            pillar.position.set(
-                (Math.random() - 0.5) * 80,
-                h / 2 - 10,
-                (Math.random() - 0.5) * 150 - 40
-            );
-            scene.add(pillar);
+        let nextSpawnZ = -60;
+
+        function generateMorePlatforms() {
+            while (nextSpawnZ > playerPos.z - 100) {
+                let x = (Math.random() - 0.5) * 12;
+                let y = (Math.random() - 0.5) * 4 + (-nextSpawnZ * 0.08); // 隨著距離逐漸爬升
+                let sx = Math.random() * 3 + 4;
+                let sz = Math.random() * 3 + 4;
+                let isMoving = Math.random() > 0.6;
+                spawnPlatform(x, y, nextSpawnZ, sx, sz, isMoving);
+                nextSpawnZ -= 12;
+            }
         }
 
-        // 動畫主循環
+        // 遊戲主循環
         let clock = new THREE.Clock();
 
         function animate() {
@@ -246,19 +290,16 @@
             // 移動平台運算
             platforms.forEach(p => {
                 if (p.isMoving) {
-                    p.mesh.position.x = p.x + Math.sin(time * 2 + p.moveOffset) * 4;
+                    p.mesh.position.x = p.x + Math.sin(time * 2.5 + p.moveOffset) * 4;
                 }
             });
 
-            // 攝影機方向基準的移動向量
-            let forward = new THREE.Vector3(Math.sin(cameraAngleX), 0, Math.cos(cameraAngleX));
-            let right = new THREE.Vector3(Math.cos(cameraAngleX), 0, -Math.sin(cameraAngleX));
-
+            // WASD 移動向量（固定世界軸向，操作直覺流暢）
             let moveDir = new THREE.Vector3(0, 0, 0);
-            if (keys.w || keys.space) moveDir.add(forward);
-            if (keys.s) moveDir.sub(forward);
-            if (keys.d) moveDir.add(right);
-            if (keys.a) moveDir.sub(right);
+            if (keys.w) moveDir.z -= 1;
+            if (keys.s) moveDir.z += 1;
+            if (keys.a) moveDir.x -= 1;
+            if (keys.d) moveDir.x += 1;
             moveDir.normalize();
 
             playerVel.x = moveDir.x * moveSpeed;
@@ -268,7 +309,7 @@
             playerVel.y += gravity;
             playerPos.add(playerVel);
 
-            // 嚴謹的碰撞檢測與防穿模機制
+            // 碰撞與積分判定
             isGrounded = false;
             let playerBox = {
                 minX: playerPos.x - 0.6, maxX: playerPos.x + 0.6,
@@ -277,43 +318,54 @@
             };
 
             platforms.forEach(p => {
-                let pWorldX = p.isMoving ? p.x + Math.sin(time * 2 + p.moveOffset) * 4 : p.x;
+                let pWorldX = p.isMoving ? p.x + Math.sin(time * 2.5 + p.moveOffset) * 4 : p.x;
                 let pMinX = pWorldX - p.sx / 2, pMaxX = pWorldX + p.sx / 2;
-                let pMinY = p.y - p.sy / 2, pMaxY = p.y + p.sy / 2;
+                let pMinY = p.y - 0.5, pMaxY = p.y + 0.5;
                 let pMinZ = p.z - p.sz / 2, pMaxZ = p.z + p.sz / 2;
 
                 if (playerBox.maxX > pMinX && playerBox.minX < pMaxX &&
                     playerBox.maxZ > pMinZ && playerBox.minZ < pMaxZ) {
                     
-                    // 降落頂部碰撞
-                    if (playerVel.y <= 0 && playerPos.y - 0.6 <= pMaxY && playerPos.y - 0.6 >= pMaxY - 0.8) {
+                    if (playerVel.y <= 0 && playerPos.y - 0.6 <= pMaxY && playerPos.y - 0.6 >= pMaxY - 0.9) {
                         playerPos.y = pMaxY + 0.6;
                         playerVel.y = 0;
                         isGrounded = true;
+                        jumpCount = 0; // 落地重置雙跳
+
+                        // 跳到新板子加一分
+                        if (!p.scored) {
+                            p.scored = true;
+                            score++;
+                            scoreEl.innerText = score;
+                        }
                     }
                 }
             });
 
             // 掉落深淵重置
-            if (playerPos.y < -20) {
-                playerPos.set(0, 5, 0);
+            if (playerPos.y < -25) {
+                playerPos.set(0, 6, 0);
                 playerVel.set(0, 0, 0);
+                score = 0;
+                scoreEl.innerText = score;
             }
 
             player.position.copy(playerPos);
             player.rotation.y += 0.02;
 
-            // 攝影機跟隨
-            let targetCamX = playerPos.x - Math.sin(cameraAngleX) * 10;
-            let targetCamY = playerPos.y + Math.sin(cameraAngleY) * 8 + 2;
-            let targetCamZ = playerPos.z - Math.cos(cameraAngleX) * 10;
+            // 動態生成前方平台
+            generateMorePlatforms();
+
+            // 攝影機完美跟隨
+            let targetCamX = playerPos.x;
+            let targetCamY = playerPos.y + 6;
+            let targetCamZ = playerPos.z + 12;
 
             camera.position.x += (targetCamX - camera.position.x) * 0.1;
             camera.position.y += (targetCamY - camera.position.y) * 0.1;
             camera.position.z += (targetCamZ - camera.position.z) * 0.1;
-            camera.lookAt(playerPos.x, playerPos.y + 1, playerPos.z);
+            camera.lookAt(playerPos.x, playerPos.y, playerPos.z - 4);
 
-            // 動態燈光跟隨
             pointLight.position.copy(playerPos);
             pointLight.position.y += 2;
 
