@@ -2,392 +2,300 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>霓虹跑酷</title>
+    <title>3D 第一人稱跑酷原型</title>
     <style>
-        * {
+        body {
             margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+            overflow: hidden;
+            background-color: #000;
+            font-family: monospace;
         }
-        body, html {
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            pointer-events: none;
+            line-height: 1.5;
+        }
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+        #instructions {
+            position: absolute;
             width: 100%;
             height: 100%;
-            overflow: hidden;
-            background-color: #020205;
-            font-family: monospace;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        canvas {
-            display: block;
-            width: 100vw;
-            height: 100vh;
-        }
-        #ui-score {
-            position: absolute;
-            top: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #00f3ff;
-            font-size: 42px;
-            font-weight: bold;
-            text-shadow: 0 0 15px rgba(0, 243, 255, 0.8);
-            pointer-events: none;
-            letter-spacing: 2px;
-        }
-        #mobile-controls {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 220px;
-            display: none;
-            pointer-events: none;
-            justify-content: space-between;
-            padding: 20px 30px;
-        }
-        @media (pointer: coarse) {
-            #mobile-controls {
-                display: flex;
-            }
-        }
-        .d-pad {
-            display: grid;
-            grid-template-columns: repeat(3, 60px);
-            grid-template-rows: repeat(2, 60px);
-            gap: 10px;
-            pointer-events: auto;
-            align-self: flex-end;
-        }
-        .mob-btn {
-            background: rgba(0, 243, 255, 0.15);
-            border: 2px solid rgba(0, 243, 255, 0.6);
-            color: #00f3ff;
-            font-size: 20px;
-            border-radius: 12px;
             display: flex;
-            align-items: center;
+            flex-direction: column;
             justify-content: center;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
-            outline: none;
-        }
-        .mob-btn:active {
-            background: rgba(0, 243, 255, 0.4);
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.8);
-        }
-        #btn-w { grid-column: 2; grid-row: 1; }
-        #btn-a { grid-column: 1; grid-row: 2; }
-        #btn-s { grid-column: 2; grid-row: 2; }
-        #btn-d { grid-column: 3; grid-row: 2; }
-
-        #btn-jump {
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            background: rgba(255, 0, 85, 0.2);
-            border: 2px solid rgba(255, 0, 85, 0.7);
-            color: #ff0055;
-            font-size: 18px;
-            font-weight: bold;
-            pointer-events: auto;
-            align-self: flex-end;
-            display: flex;
             align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 0 15px rgba(255, 0, 85, 0.3);
-            outline: none;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            cursor: pointer;
+            z-index: 10;
         }
-        #btn-jump:active {
-            background: rgba(255, 0, 85, 0.5);
-            box-shadow: 0 0 25px rgba(255, 0, 85, 0.9);
-        }
+        #instructions h1 { margin: 0 0 10px 0; color: #00ffcc; }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-    <div id="ui-score">0</div>
-
-    <div id="mobile-controls">
-        <div class="d-pad">
-            <button class="mob-btn" id="btn-w">▲</button>
-            <button class="mob-btn" id="btn-a">◀</button>
-            <button class="mob-btn" id="btn-s">▼</button>
-            <button class="mob-btn" id="btn-d">▶</button>
-        </div>
-        <button class="mob-btn" id="btn-jump">跳躍</button>
+    <div id="instructions">
+        <h1>3D 跑酷挑戰</h1>
+        <p>點擊此處開始遊戲</p>
+        <p>[W][A][S][D] 移動 | [空白鍵] 跳躍 | [滑鼠] 視角</p>
     </div>
 
-    <canvas id="gameCanvas"></canvas>
+    <div id="crosshair"></div>
+    
+    <div id="info">
+        狀態: <span id="status" style="color: #00ffcc;">準備開始</span><br>
+        速度: <span id="speed">0.0</span><br>
+        高度: <span id="height">0.0</span>
+    </div>
+
+    <!-- 引入 Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        let scene, camera, renderer;
+        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
+        let canJump = false;
 
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x020205);
-        scene.fog = new THREE.FogExp2(0x020205, 0.015);
+        let velocity = new THREE.Vector3();
+        let direction = new THREE.Vector3();
 
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-
-        // 燈光設置
-        const ambientLight = new THREE.AmbientLight(0x151a30, 3.0);
-        scene.add(ambientLight);
-
-        const dirLight = new THREE.DirectionalLight(0x00f3ff, 4.0);
-        dirLight.position.set(20, 50, 20);
-        dirLight.castShadow = true;
-        dirLight.shadow.mapSize.width = 2048;
-        dirLight.shadow.mapSize.height = 2048;
-        scene.add(dirLight);
-
-        const pointLight = new THREE.PointLight(0xff0055, 6, 30);
-        scene.add(pointLight);
-
-        // 材質
-        const metalMaterial = new THREE.MeshStandardMaterial({ color: 0x111420, metalness: 0.9, roughness: 0.2 });
-        const cyanMat = new THREE.MeshStandardMaterial({ color: 0x00f3ff, emissive: 0x00f3ff, emissiveIntensity: 2.0 });
-        const pinkMat = new THREE.MeshStandardMaterial({ color: 0xff0055, emissive: 0xff0055, emissiveIntensity: 2.0 });
-
-        // 玩家方塊
-        const playerGeo = new THREE.BoxGeometry(1.2, 1.2, 1.2);
-        const playerMat = new THREE.MeshStandardMaterial({ color: 0x00f3ff, metalness: 0.8, roughness: 0.1, emissive: 0x005577, emissiveIntensity: 0.8 });
-        const player = new THREE.Mesh(playerGeo, playerMat);
-        player.castShadow = true;
-        scene.add(player);
-
-        const coreGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-        const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-        const playerCore = new THREE.Mesh(coreGeo, coreMat);
-        player.add(playerCore);
-
-        // 遊戲變數（好玩又刺激的平衡）
-        let playerPos = new THREE.Vector3(0, 6, 0);
-        let playerVel = new THREE.Vector3(0, 0, 0);
-        const gravity = -0.014;  
-        const jumpForce = 0.35;  
-        const moveSpeed = 0.18;
-        let isGrounded = false;
-        let jumpCount = 0;
-        const maxJumps = 2;
-        let score = 0;
-
-        const scoreEl = document.getElementById('ui-score');
-        const keys = { w: false, a: false, s: false, d: false };
-
-        function triggerJump() {
-            if (jumpCount < maxJumps) {
-                playerVel.y = jumpForce;
-                jumpCount++;
-                isGrounded = false;
-                createJumpEffect();
-            }
-        }
-
-        // 跳躍粒子特效
-        const particles = [];
-        function createJumpEffect() {
-            for (let i = 0; i < 8; i++) {
-                const pGeo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-                const pMat = new THREE.MeshBasicMaterial({ color: 0x00f3ff });
-                const pMesh = new THREE.Mesh(pGeo, pMat);
-                pMesh.position.copy(playerPos);
-                scene.add(pMesh);
-                particles.push({
-                    mesh: pMesh,
-                    vel: new THREE.Vector3((Math.random() - 0.5) * 0.2, Math.random() * 0.2, (Math.random() - 0.5) * 0.2),
-                    life: 20
-                });
-            }
-        }
-
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'KeyW' || e.code === 'ArrowUp') keys.w = true;
-            if (e.code === 'KeyS' || e.code === 'ArrowDown') keys.s = true;
-            if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.a = true;
-            if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.d = true;
-            if (e.code === 'Space') triggerJump();
-        });
-
-        window.addEventListener('keyup', (e) => {
-            if (e.code === 'KeyW' || e.code === 'ArrowUp') keys.w = false;
-            if (e.code === 'KeyS' || e.code === 'ArrowDown') keys.s = false;
-            if (e.code === 'KeyA' || e.code === 'ArrowLeft') keys.a = false;
-            if (e.code === 'KeyD' || e.code === 'ArrowRight') keys.d = false;
-        });
-
-        function bindMobBtn(id, keyName) {
-            const btn = document.getElementById(id);
-            btn.addEventListener('touchstart', (e) => { e.preventDefault(); keys[keyName] = true; });
-            btn.addEventListener('touchend', (e) => { e.preventDefault(); keys[keyName] = false; });
-            btn.addEventListener('mousedown', (e) => { e.preventDefault(); keys[keyName] = true; });
-            btn.addEventListener('mouseup', (e) => { e.preventDefault(); keys[keyName] = false; });
-        }
-        bindMobBtn('btn-w', 'w');
-        bindMobBtn('btn-a', 'a');
-        bindMobBtn('btn-s', 's');
-        bindMobBtn('btn-d', 'd');
-
-        document.getElementById('btn-jump').addEventListener('touchstart', (e) => { e.preventDefault(); triggerJump(); });
-        document.getElementById('btn-jump').addEventListener('mousedown', (e) => { e.preventDefault(); triggerJump(); });
-
+        let prevTime = performance.now();
         const platforms = [];
-        const platformGeo = new THREE.BoxGeometry(1, 1, 1);
 
-        function spawnPlatform(x, y, z, sx, sz, isMoving = false) {
-            const group = new THREE.Group();
-            const mesh = new THREE.Mesh(platformGeo, metalMaterial);
-            mesh.scale.set(sx, 1, sz);
-            mesh.castShadow = true;
-            mesh.receiveShadow = true;
-            group.add(mesh);
+        const instructions = document.getElementById('instructions');
 
-            const edge = new THREE.Mesh(new THREE.BoxGeometry(sx + 0.1, 0.1, sz + 0.1), Math.random() > 0.4 ? cyanMat : pinkMat);
-            edge.position.y = 0.5;
-            group.add(edge);
+        init();
+        animate();
 
-            group.position.set(x, y, z);
-            scene.add(group);
+        function init() {
+            // 1. 場景與相機
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x111122);
+            scene.fog = new THREE.FogExp2(0x111122, 0.015);
 
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 5, 10);
+
+            // 2. 燈光
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(20, 40, 20);
+            scene.add(dirLight);
+
+            // 3. 渲染器
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+
+            // 4. 指針鎖定控制 (PointerLock)
+            instructions.addEventListener('click', () => {
+                renderer.domElement.requestPointerLock();
+            });
+
+            document.addEventListener('pointerlockchange', () => {
+                if (document.pointerLockElement === renderer.domElement) {
+                    instructions.style.display = 'none';
+                } else {
+                    instructions.style.display = 'flex';
+                }
+            });
+
+            document.addEventListener('mousemove', onMouseMove, false);
+            document.addEventListener('keydown', onKeyDown, false);
+            document.addEventListener('keyup', onKeyUp, false);
+
+            // 5. 建立關卡 (平台陣列)
+            createLevel();
+
+            window.addEventListener('resize', onWindowResize, false);
+        }
+
+        // 建立跑酷關卡
+        function createLevel() {
+            const material = new THREE.MeshStandardMaterial({ 
+                color: 0x223344, 
+                roughness: 0.4,
+                metalness: 0.2
+            });
+            const hazardMaterial = new THREE.MeshStandardMaterial({ color: 0xff3333 });
+            const startMaterial = new THREE.MeshStandardMaterial({ color: 0x00ffcc });
+
+            // 起始平台
+            addPlatform(0, 0, 0, 15, 2, 15, startMaterial);
+
+            // 隨機生成一系列跳躍平台
+            let zPos = -20;
+            let xPos = 0;
+            let yPos = 0;
+
+            for (let i = 0; i < 20; i++) {
+                xPos += (Math.random() - 0.5) * 12;
+                yPos += (Math.random() * 4) - 1; // 隨機高低起伏
+                zPos -= 15 + Math.random() * 5;
+
+                const width = Math.max(4, 10 - i * 0.2);
+                const depth = Math.max(4, 10 - i * 0.2);
+
+                addPlatform(xPos, yPos, zPos, width, 2, depth, material);
+            }
+
+            // 終點平台
+            addPlatform(0, yPos + 2, zPos - 20, 10, 2, 10, startMaterial);
+        }
+
+        function addPlatform(x, y, z, w, h, d, mat) {
+            const geometry = new THREE.BoxGeometry(w, h, d);
+            const mesh = new THREE.Mesh(geometry, mat);
+            mesh.position.set(x, y, z);
+            scene.add(mesh);
+
+            // 儲存邊界數據用於碰撞檢測
             platforms.push({
-                mesh: group,
-                x, y, z, sx, sz,
-                isMoving,
-                moveOffset: Math.random() * Math.PI * 2,
-                scored: false
+                mesh: mesh,
+                box: new THREE.Box3().setFromObject(mesh)
             });
         }
 
-        spawnPlatform(0, 0, 0, 7, 7);
-        spawnPlatform(0, 1.2, -12, 5, 5);
-        spawnPlatform(3, 2.4, -24, 5, 5, true);
-        spawnPlatform(-3, 3.6, -36, 5, 5);
+        // 滑鼠視角控制
+        const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+        const PI_2 = Math.PI / 2;
 
-        let nextSpawnZ = -48;
+        function onMouseMove(event) {
+            if (document.pointerLockElement !== renderer.domElement) return;
 
-        function generateMorePlatforms() {
-            while (nextSpawnZ > playerPos.z - 100) {
-                let x = (Math.random() - 0.5) * 10;
-                let y = (Math.random() - 0.5) * 3 + (-nextSpawnZ * 0.05);
-                let sx = Math.random() * 2 + 4;
-                let sz = Math.random() * 2 + 4;
-                let isMoving = Math.random() > 0.4; // 提高動態平台的機率，增加刺激感！
-                spawnPlatform(x, y, nextSpawnZ, sx, sz, isMoving);
-                nextSpawnZ -= 12;
-            }
+            const movementX = event.movementX || event.mozMovementX || event.webKitMovementX || 0;
+            const movementY = event.movementY || event.mozMovementY || event.webKitMovementY || 0;
+
+            euler.setFromQuaternion(camera.quaternion);
+
+            euler.y -= movementX * 0.002;
+            euler.x -= movementY * 0.002;
+
+            euler.x = Math.max(-PI_2, Math.min(PI_2, euler.x));
+
+            camera.quaternion.setFromEuler(euler);
         }
 
-        let clock = new THREE.Clock();
-
-        function animate() {
-            requestAnimationFrame(animate);
-            let time = clock.getElapsedTime();
-
-            platforms.forEach(p => {
-                if (p.isMoving) {
-                    p.mesh.position.x = p.x + Math.sin(time * 3.0 + p.moveOffset) * 4.5;
-                }
-            });
-
-            // 更新粒子
-            for (let i = particles.length - 1; i >= 0; i--) {
-                let p = particles[i];
-                p.mesh.position.add(p.vel);
-                p.life--;
-                p.mesh.scale.multiplyScalar(0.9);
-                if (p.life <= 0) {
-                    scene.remove(p.mesh);
-                    particles.splice(i, 1);
-                }
-            }
-
-            let moveDir = new THREE.Vector3(0, 0, 0);
-            if (keys.w) moveDir.z -= 1;
-            if (keys.s) moveDir.z += 1;
-            if (keys.a) moveDir.x -= 1;
-            if (keys.d) moveDir.x += 1;
-            moveDir.normalize();
-
-            playerVel.x = moveDir.x * moveSpeed;
-            playerVel.z = moveDir.z * moveSpeed;
-
-            playerVel.y += gravity;
-            playerPos.add(playerVel);
-
-            isGrounded = false;
-            let playerBox = {
-                minX: playerPos.x - 0.6, maxX: playerPos.x + 0.6,
-                minY: playerPos.y - 0.6, maxY: playerPos.y + 0.6,
-                minZ: playerPos.z - 0.6, maxZ: playerPos.z + 0.6
-            };
-
-            platforms.forEach(p => {
-                let pWorldX = p.isMoving ? p.x + Math.sin(time * 3.0 + p.moveOffset) * 4.5 : p.x;
-                let pMinX = pWorldX - p.sx / 2, pMaxX = pWorldX + p.sx / 2;
-                let pMinY = p.y - 0.5, pMaxY = p.y + 0.5;
-                let pMinZ = p.z - p.sz / 2, pMaxZ = p.z + p.sz / 2;
-
-                if (playerBox.maxX > pMinX && playerBox.minX < pMaxX &&
-                    playerBox.maxZ > pMinZ && playerBox.minZ < pMaxZ) {
-                    
-                    if (playerVel.y <= 0 && playerPos.y - 0.6 <= pMaxY && playerPos.y - 0.6 >= pMaxY - 0.9) {
-                        playerPos.y = pMaxY + 0.6;
-                        playerVel.y = 0;
-                        isGrounded = true;
-                        jumpCount = 0;
-
-                        if (!p.scored) {
-                            p.scored = true;
-                            score++;
-                            scoreEl.innerText = score;
-                        }
+        function onKeyDown(event) {
+            switch (event.code) {
+                case 'KeyW': moveForward = true; break;
+                case 'KeyS': moveBackward = true; break;
+                case 'KeyA': moveLeft = true; break;
+                case 'KeyD': moveRight = true; break;
+                case 'Space':
+                    if (canJump) {
+                        velocity.y += 12; // 跳躍力道
+                        canJump = false;
                     }
-                }
-            });
-
-            // 掉落重置（硬核挑戰：掉下去重新挑戰高分！）
-            if (playerPos.y < -25) {
-                playerPos.set(0, 6, 0);
-                playerVel.set(0, 0, 0);
-                score = 0;
-                scoreEl.innerText = score;
+                    break;
             }
-
-            player.position.copy(playerPos);
-            player.rotation.y += 0.03;
-            player.rotation.x += 0.01;
-
-            generateMorePlatforms();
-
-            let targetCamX = playerPos.x;
-            let targetCamY = playerPos.y + 6;
-            let targetCamZ = playerPos.z + 12;
-
-            camera.position.x += (targetCamX - camera.position.x) * 0.12;
-            camera.position.y += (targetCamY - camera.position.y) * 0.12;
-            camera.position.z += (targetCamZ - camera.position.z) * 0.12;
-            camera.lookAt(playerPos.x, playerPos.y, playerPos.z - 4);
-
-            pointLight.position.copy(playerPos);
-            pointLight.position.y += 2;
-
-            renderer.render(scene, camera);
         }
 
-        window.addEventListener('resize', () => {
+        function onKeyUp(event) {
+            switch (event.code) {
+                case 'KeyW': moveForward = false; break;
+                case 'KeyS': moveBackward = false; break;
+                case 'KeyA': moveLeft = false; break;
+                case 'KeyD': moveRight = false; break;
+            }
+        }
+
+        function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        }
 
-        animate();
+        // 遊戲主迴圈
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = performance.now();
+            const delta = (time - prevTime) / 1000;
+
+            if (document.pointerLockElement === renderer.domElement) {
+                // 1. 套用重力
+                velocity.y -= 30 * delta;
+
+                // 2. 移動方向計算
+                direction.z = Number(moveForward) - Number(moveBackward);
+                direction.x = Number(moveRight) - Number(moveLeft);
+                direction.normalize(); // 確保斜向移動速度不變快
+
+                // 空中加速與地面移動摩擦力
+                const speedMultiplier = canJump ? 400.0 : 150.0; 
+
+                if (moveForward || moveBackward) velocity.z -= direction.z * speedMultiplier * delta;
+                if (moveLeft || moveRight) velocity.x -= direction.x * speedMultiplier * delta;
+
+                // 摩擦力減速
+                if (canJump) {
+                    velocity.x *= 0.85;
+                    velocity.z *= 0.85;
+                } else {
+                    velocity.x *= 0.98; // 空中維持慣性 (Bhop 核心)
+                    velocity.z *= 0.98;
+                }
+
+                // 3. 套用位移
+                camera.translateX(-velocity.x * delta);
+                camera.translateZ(velocity.z * delta);
+                camera.position.y += velocity.y * delta;
+
+                // 4. 簡易 AABB 碰撞與平台檢測
+                canJump = false;
+                const playerBox = new THREE.Box3(
+                    new THREE.Vector3(camera.position.x - 0.6, camera.position.y - 1.8, camera.position.z - 0.6),
+                    new THREE.Vector3(camera.position.x + 0.6, camera.position.y, camera.position.z + 0.6)
+                );
+
+                for (let i = 0; i < platforms.length; i++) {
+                    const p = platforms[i];
+                    if (playerBox.intersectsBox(p.box)) {
+                        // 檢測是否落在平台上方
+                        const pTop = p.mesh.position.y + 1;
+                        if (camera.position.y >= pTop - 0.5 && velocity.y <= 0) {
+                            camera.position.y = pTop + 1.8;
+                            velocity.y = 0;
+                            canJump = true;
+                        }
+                    }
+                }
+
+                // 5. 掉落死亡重置
+                if (camera.position.y < -30) {
+                    camera.position.set(0, 5, 10);
+                    velocity.set(0, 0, 0);
+                }
+
+                // 更新 UI 數據
+                document.getElementById('speed').innerText = Math.sqrt(velocity.x**2 + velocity.z**2).toFixed(1);
+                document.getElementById('height').innerText = camera.position.y.toFixed(1);
+                document.getElementById('status').innerText = canJump ? "在地面 (可跳躍)" : "空中 (慣性滑行)";
+                document.getElementById('status').style.color = canJump ? "#00ffcc" : "#ffcc00";
+            }
+
+            prevTime = time;
+            renderer.render(scene, camera);
+        }
     </script>
 </body>
 </html>
