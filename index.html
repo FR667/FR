@@ -3,334 +3,214 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>暗影 - FR AI 科技公司 | 頂級數位官方名片</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Quantum Cyber Singularity</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
         body, html {
             width: 100%;
-            min-height: 100%;
-            background-color: #03030c;
-            font-family: 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
-            color: #ffffff;
-            overflow-x: hidden;
-        }
-
-        .universe {
-            position: relative;
-            width: 100vw;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: radial-gradient(circle at center, #0f0c29, #302b63, #24243e);
-            padding: 50px 20px;
-            overflow: hidden;
-        }
-
-        /* 宇宙動態霓虹背景 */
-        .universe::before {
-            content: '';
-            position: absolute;
-            width: 200%;
-            height: 200%;
-            background: conic-gradient(from 0deg at 50% 50%, #ff007f, #7f00ff, #00f0ff, #00ff7f, #ff007f);
-            animation: rotateGlow 20s linear infinite;
-            opacity: 0.12;
-            filter: blur(90px);
-            z-index: 0;
-        }
-
-        @keyframes rotateGlow {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* 頂級液態玻璃主容器 (整合官網內容) */
-        .liquid-glass-master {
-            position: relative;
-            width: 100%;
-            max-width: 850px;
-            border-radius: 35px;
-            background: rgba(255, 255, 255, 0.025);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.25),
-                        inset 0 -1px 0 rgba(0, 0, 0, 0.8);
-            display: flex;
-            flex-direction: column;
-            padding: 50px 40px;
-            overflow: hidden;
-            z-index: 2;
-            transition: transform 0.4s ease, box-shadow 0.4s ease;
-        }
-
-        .liquid-glass-master:hover {
-            box-shadow: 0 50px 120px rgba(0, 240, 255, 0.18),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.4),
-                        inset 0 -1px 0 rgba(0, 0, 0, 0.9);
-        }
-
-        /* 流動電浆光波背景 */
-        .plasma-wave {
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(0,240,255,0.25) 0%, rgba(127,0,255,0.15) 40%, transparent 70%);
-            mix-blend-mode: screen;
-            transition: transform 0.2s ease-out;
-            pointer-events: none;
-            filter: blur(30px);
-            z-index: 1;
-        }
-
-        /* 內容層 */
-        .content-layer {
-            position: relative;
-            z-index: 3;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 35px;
-        }
-
-        /* 名片頂部：個人與身分 */
-        .card-top {
-            display: flex;
-            align-items: center;
-            gap: 25px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding-bottom: 30px;
-        }
-
-        .avatar-box {
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            border: 2px solid rgba(0, 240, 255, 0.6);
-            background: rgba(0, 240, 255, 0.08);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 0 25px rgba(0,240,255,0.3);
-            flex-shrink: 0;
-        }
-
-        .avatar-box i {
-            font-size: 2.5rem;
-            color: #00f0ff;
-        }
-
-        .identity-info .company-tag {
-            font-size: 0.75rem;
-            letter-spacing: 3px;
-            color: #00f0ff;
-            font-weight: 700;
-            margin-bottom: 5px;
-            display: block;
-            text-shadow: 0 0 8px rgba(0,240,255,0.5);
-        }
-
-        .identity-info h1 {
-            font-size: 2rem;
-            font-weight: 800;
-            letter-spacing: 1px;
-            background: linear-gradient(to right, #fff, #00f0ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 4px;
-        }
-
-        .identity-info .role {
-            font-size: 0.95rem;
-            color: #a5a2b0;
-            letter-spacing: 1px;
-        }
-
-        /* 官網核心模組排版 */
-        .official-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 20px;
-        }
-
-        .module-card {
-            background: rgba(0, 0, 0, 0.35);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 20px;
-            padding: 22px;
-            transition: 0.3s;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .module-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
             height: 100%;
-            background: #ff007f;
-            opacity: 0.8;
+            overflow: hidden;
+            background-color: #000;
         }
-
-        .module-card.tech::before { background: #00f0ff; }
-        .module-card.security::before { background: #7f00ff; }
-
-        .module-card:hover {
-            border-color: rgba(0, 240, 255, 0.4);
-            transform: translateY(-4px);
-            box-shadow: 0 10px 30px rgba(0,240,255,0.12);
-        }
-
-        .module-card h3 {
-            font-size: 1.05rem;
-            color: #fff;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .module-card h3 i {
-            color: #00f0ff;
-        }
-
-        .module-card p {
-            font-size: 0.88rem;
-            color: #bcbcd0;
-            line-height: 1.6;
-        }
-
-        /* 企業生態系橫幅 */
-        .ecosystem-banner {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 20px;
-            padding: 20px 25px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .ecosystem-title {
-            font-size: 0.9rem;
-            color: #00f0ff;
-            letter-spacing: 1px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .ecosystem-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .eco-tag {
-            background: rgba(127, 0, 255, 0.15);
-            border: 1px solid rgba(127, 0, 255, 0.4);
-            padding: 7px 15px;
-            border-radius: 15px;
-            font-size: 0.85rem;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .eco-tag i {
-            color: #00f0ff;
-            font-size: 0.8rem;
-        }
-
-        /* 響應式微調 */
-        @media(max-width: 650px) {
-            .liquid-glass-master { padding: 30px 20px; }
-            .card-top { flex-direction: column; text-align: center; }
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
         }
     </style>
 </head>
 <body>
-
-    <div class="universe">
-        <div class="liquid-glass-master" id="glassContainer">
-            <div class="plasma-wave" id="plasmaWave"></div>
-            
-            <div class="content-layer">
-                <!-- 頂部名片身分 -->
-                <div class="card-top">
-                    <div class="avatar-box">
-                        <i class="fas fa-user-secret"></i>
-                    </div>
-                    <div class="identity-info">
-                        <span class="company-tag">FR AI TECHNOLOGY • 官方數位證件</span>
-                        <h1>暗影</h1>
-                        <div class="role">最高技術管理者 / 創辦人</div>
-                    </div>
-                </div>
-
-                <!-- 官網核心技術與架構內容整合 -->
-                <div class="official-grid">
-                    <div class="module-card tech">
-                        <h3><i class="fas fa-microchip"></i> 核心技術領域</h3>
-                        <p>專注於現代前端網頁技術、系統級核心開發與高效能運算。提供從高互動性使用者介面到底層系統優化的全方位解決方案[cite: 1]。</p>
-                    </div>
-
-                    <div class="module-card security">
-                        <h3><i class="fas fa-shield-alt"></i> 系統優勢與架構</h3>
-                        <p>具備精簡程式碼結構、毫秒級硬體反應速度及完善資安防禦。支援標準網頁建置、C/C++ 底層硬體通訊與高可靠度跨平台架構[cite: 1]。</p>
-                    </div>
-                </div>
-
-                <!-- 企業生態系夥伴 -->
-                <div class="ecosystem-banner">
-                    <div class="ecosystem-title">
-                        <i class="fas fa-network-wired"></i> 企業生態系與跨界聯盟
-                    </div>
-                    <div class="ecosystem-tags">
-                        <div class="eco-tag"><i class="fas fa-server"></i> FR AI 核心研發中心</div>
-                        <div class="eco-tag"><i class="fas fa-laptop-code"></i> RR 科技公司（創新軟體研發）[cite: 1]</div>
-                        <div class="eco-tag"><i class="fas fa-paint-brush"></i> HLSS 專業網頁公司（UI/UX 與前端應用）[cite: 1]</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <canvas id="glCanvas"></canvas>
 
     <script>
-        const container = document.getElementById('glassContainer');
-        const plasma = document.getElementById('plasmaWave');
+        const canvas = document.getElementById('glCanvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
 
-        // 滑鼠移動互動：光波跟隨與精緻 3D 旋轉傾斜
-        container.addEventListener('mousemove', (e) => {
-            const rect = container.getBoundingClientRect();
-            const x = e.clientX - rect.left - rect.width / 2;
-            const y = e.clientY - rect.top - rect.height / 2;
+        if (!gl) {
+            alert('您的瀏覽器不支援 WebGL，請切換至 Chrome 或 Safari。');
+        }
 
-            plasma.style.transform = `translate(${x * 0.25}px, ${y * 0.25}px) scale(1.15)`;
-            
-            const tiltX = -(y / rect.height) * 10;
-            const tiltY = (x / rect.width) * 10;
-            container.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale(1.01)`;
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            gl.viewport(0, 0, width, height);
         });
 
-        container.addEventListener('mouseleave', () => {
-            plasma.style.transform = `translate(0px, 0px) scale(1)`;
-            container.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) scale(1)`;
+        // 頂點著色器
+        const vsSource = `
+            attribute vec2 a_position;
+            void main() {
+                gl_Position = vec4(a_position, 0.0, 1.0);
+            }
+        `;
+
+        // 片元著色器 (高科技動態碎形量子光束)
+        const fsSource = `
+            precision highp float;
+            uniform vec2 u_resolution;
+            uniform vec2 u_mouse;
+            uniform float u_time;
+            uniform float u_click;
+
+            #define MAX_STEPS 64
+            #define SURF_DIST 0.001
+            #define MAX_DIST 50.0
+
+            // 旋轉矩陣
+            mat2 rot(float a) {
+                float s = sin(a), c = cos(a);
+                return mat2(c, -s, s, c);
+            }
+
+            // 3D 空間雜訊/距離場
+            float sdBox(vec3 p, vec3 b) {
+                vec3 q = abs(p) - b;
+                return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);
+            }
+
+            float map(vec3 p) {
+                // 空間扭曲與滑鼠互動
+                p.xy *= rot(u_time * 0.1 + u_mouse.x * 2.0);
+                p.yz *= rot(u_time * 0.15 + u_mouse.y * 2.0);
+                
+                // 重複幾何體產生量子隧道
+                vec3 q = fract(p * 0.6) - 0.5;
+                float box = sdBox(q, vec3(0.25 + u_click * 0.3));
+                
+                return box;
+            }
+
+            void main() {
+                vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+                
+                vec3 ro = vec3(0.0, 0.0, u_time * 1.5 - u_click * 5.0); // 相機位置前進
+                vec3 rd = normalize(vec3(uv, 1.0 - length(uv) * 0.4));
+
+                float dO = 0.0;
+                float acc = 0.0;
+
+                // 光線行進 (Raymarching)
+                for(int i = 0; i < MAX_STEPS; i++) {
+                    vec3 p = ro + rd * dO;
+                    float dS = map(p);
+                    dO += dS;
+                    
+                    // 累積光暈
+                    if(dS < 0.1) {
+                        acc += 0.05;
+                    }
+                    
+                    if(dO > MAX_DIST || dS < SURF_DIST) break;
+                }
+
+                // 色彩合成 (高科技霓虹發光色調)
+                vec3 col = vec3(0.05, 0.1, 0.2) * dO * 0.2;
+                col += vec3(0.1 + u_click * 0.4, 0.4 + sin(u_time)*0.2, 0.9) * acc * (1.2 + u_click * 2.0);
+                
+                // 邊角暈影
+                col *= 1.0 - length(uv) * 0.5;
+
+                gl_FragColor = vec4(col, 1.0);
+            }
+        `;
+
+        function createShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error(gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            return shader;
+        }
+
+        const vertexShader = createShader(gl, gl.VERTEX_SHADER, vsSource);
+        const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
+
+        const program = gl.createProgram();
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+            console.error(gl.getProgramInfoLog(program));
+        }
+
+        gl.useProgram(program);
+
+        // 設定滿版矩形頂點
+        const positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        const positions = new Float32Array([
+            -1, -1,
+             1, -1,
+            -1,  1,
+            -1,  1,
+             1, -1,
+             1,  1,
+        ]);
+        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+
+        const aPositionLocation = gl.getAttribLocation(program, "a_position");
+        gl.enableVertexAttribArray(aPositionLocation);
+        gl.vertexAttribPointer(aPositionLocation, 2, gl.FLOAT, false, 0, 0);
+
+        // 取得 Uniform 變數位置
+        const uResolutionLocation = gl.getUniformLocation(program, "u_resolution");
+        const uMouseLocation = gl.getUniformLocation(program, "u_mouse");
+        const uTimeLocation = gl.getUniformLocation(program, "u_time");
+        const uClickLocation = gl.getUniformLocation(program, "u_click");
+
+        // 滑鼠與互動狀態追蹤
+        const mouse = { x: 0, y: 0, targetX: 0, targetY: 0, click: 0, targetClick: 0 };
+
+        window.addEventListener('mousemove', (e) => {
+            mouse.targetX = (e.clientX / width) * 2 - 1;
+            mouse.targetY = -((e.clientY / height) * 2 - 1);
         });
+
+        window.addEventListener('mousedown', () => mouse.targetClick = 1.0);
+        window.addEventListener('mouseup', () => mouse.targetClick = 0.0);
+
+        window.addEventListener('touchmove', (e) => {
+            if(e.touches.length > 0) {
+                mouse.targetX = (e.touches[0].clientX / width) * 2 - 1;
+                mouse.targetY = -((e.touches[0].clientY / height) * 2 - 1);
+            }
+        }, {passive: true});
+
+        window.addEventListener('touchstart', () => mouse.targetClick = 1.0);
+        window.addEventListener('touchend', () => mouse.targetClick = 0.0);
+
+        let startTime = Date.now();
+
+        function render() {
+            let currentTime = (Date.now() - startTime) * 0.001;
+
+            // 平滑緩動
+            mouse.x += (mouse.targetX - mouse.x) * 0.05;
+            mouse.y += (mouse.targetY - mouse.y) * 0.05;
+            mouse.click += (mouse.targetClick - mouse.click) * 0.1;
+
+            gl.uniform2f(uResolutionLocation, width, height);
+            gl.uniform2f(uMouseLocation, mouse.x, mouse.y);
+            gl.uniform1f(uTimeLocation, currentTime);
+            gl.uniform1f(uClickLocation, mouse.click);
+
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+            requestAnimationFrame(render);
+        }
+
+        render();
     </script>
 </body>
 </html>
