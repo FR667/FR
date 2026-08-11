@@ -18,7 +18,6 @@
             height: 100vh;
             display: block;
         }
-        /* 載入提示，防止編譯過久黑屏 */
         #loader {
             position: absolute;
             top: 50%;
@@ -28,6 +27,7 @@
             font-family: monospace;
             font-size: 20px;
             pointer-events: none;
+            transition: opacity 0.5s;
         }
     </style>
 </head>
@@ -43,71 +43,53 @@
         }
     </script>
 
-    <!-- 片元著色器 (Fragment Shader) - 核心光影邏輯 -->
+    <!-- 片元著色器 (Fragment Shader) - 核心 3D 光影邏輯 -->
     <script id="fs" type="x-shader/x-fragment">
         precision highp float;
 
         uniform vec2 u_resolution;
         uniform vec2 u_mouse;
         uniform float u_time;
-        uniform float u_click; // 0.0 to 1.0
+        uniform float u_click;
 
         #define MAX_STEPS 100
         #define MAX_DIST 50.0
         #define SURF_DIST 0.001
-        #define PI 3.14159265359
 
-        // --- 數學工具 ---
         mat2 Rot(float a) {
             float s = sin(a), c = cos(a);
             return mat2(c, -s, s, c);
         }
 
-        // 圓滑最小值 (用於融合形狀)
         float smin( float a, float b, float k ) {
             float res = exp2( -k*a ) + exp2( -k*b );
             return -log2( res )/k;
         }
 
-        // --- 3D 距離場 (SDF) 定義 ---
-        
-        // 科學怪人盒子 (金屬核心)
         float sdBox( vec3 p, vec3 b ) {
             vec3 q = abs(p) - b;
             return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
         }
 
-        // 場景形狀組合
         vec2 map(vec3 p) {
-            // 基礎旋轉
             p.xy *= Rot(u_time * 0.2 + u_mouse.x * 0.5);
             p.xz *= Rot(u_time * 0.1 + u_mouse.y * 0.3);
 
-            // 初始核心
             float d1 = sdBox(p, vec3(1.0));
-            
-            // 脈動變形 (利用時間與滑鼠點擊)
             float pulse = sin(u_time * 2.0 + u_click * 10.0) * 0.1;
             
-            // 四周環繞的量子球體陣列
             vec3 q = p;
             q.x = mod(q.x+2.0, 4.0)-2.0;
             q.y = mod(q.y+2.0, 4.0)-2.0;
             q.z = mod(q.z+2.0, 4.0)-2.0;
             float spheres = length(q) - (0.3 + pulse);
 
-            // 合併場景，使用 smin 創造融化般的金屬質感
             float dist = smin(d1, spheres, 8.0);
-            
-            // 材質 ID (1 = 核心, 2 = 球體) - 這裡簡單化處理
             float mat = d1 < spheres ? 1.0 : 2.0;
 
             return vec2(dist, mat);
         }
 
-        // --- 光線追踪與陰影處理 ---
-
-        // 計算表面法線 (用於光照)
         vec3 getNormal(vec3 p) {
             vec2 e = vec2(SURF_DIST, 0.0);
             vec3 n = map(p).x - vec3(
@@ -118,7 +100,6 @@
             return normalize(n);
         }
 
-        // 光線行進 (Raymarching core)
         vec2 rayMarch(vec3 ro, vec3 rd) {
             float dO = 0.0;
             float mat = 0.0;
@@ -132,16 +113,14 @@
             return vec2(dO, mat);
         }
 
-        // 軟陰影 (Soft Shadows) - 判斷點是否在陰影中
         float getSoftShadow(vec3 p, vec3 lightPos) {
             vec3 rd = normalize(lightPos - p);
             float distToLight = length(lightPos - p);
-            float dO = 0.1; // 從表面稍微偏移一點開始
+            float dO = 0.1;
             float shadow = 1.0;
             for(int i=0; i<50; i++) {
                 vec3 pos = p + rd * dO;
                 float dS = map(pos).x;
-                // 越接近遮蔽物，陰影越深 (k值控制軟硬度)
                 shadow = min(shadow, 16.0 * dS / dO);
                 dO += dS;
                 if(dO > distToLight || shadow < 0.0001) break;
@@ -149,7 +128,6 @@
             return clamp(shadow, 0.0, 1.0);
         }
 
-        // 環境光遮蔽 (Ambient Occlusion - AO) - 模擬角落變暗
         float getAO(vec3 p, vec3 n) {
             float occ = 0.0;
             float sca = 1.0;
@@ -163,16 +141,12 @@
             return clamp( 1.0 - 3.0*occ, 0.0, 1.0 );
         }
 
-        // --- 主渲染函數 ---
         void main() {
             vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
-            vec2 m = u_mouse.xy / u_resolution.xy;
 
-            // 相機設定
-            vec3 ro = vec3(0.0, 0.0, -8.0); // 相機位置
+            vec3 ro = vec3(0.0, 0.0, -8.0);
             vec3 lookat = vec3(0.0, 0.0, 0.0);
             
-            // 視線方向
             float zoom = 1.5;
             vec3 f = normalize(lookat - ro);
             vec3 r = normalize(cross(vec3(0.0,1.0,0.0), f));
@@ -181,84 +155,60 @@
             vec3 i = c + uv.x * r + uv.y * u;
             vec3 rd = normalize(i - ro);
 
-            // 執行光線追踪
             vec2 rm = rayMarch(ro, rd);
             float d = rm.x;
             float mat = rm.y;
 
-            // 背景色 (深邃宇宙藍)
             vec3 col = vec3(0.02, 0.05, 0.1) * (0.8 - length(uv)*0.3);
 
             if(d < MAX_DIST) {
                 vec3 p = ro + rd * d;
                 vec3 n = getNormal(p);
-                vec3 l = normalize(vec3(2.0, 4.0, -3.0)); // 模擬主光源位置
+                vec3 l = normalize(vec3(2.0, 4.0, -3.0));
                 
-                // --- 複雜光影計算 ---
-                
-                // 1. 環境光
                 float ambient = 0.05;
-                
-                // 2. 漫射光 (Lambertian)
-                float diffuse = max(0.0, dot(n, l)) * 0.5 + 0.5; // 半蘭伯特，避免全黑
-                
-                // 3. 鏡面反射 (Phong Specular) - 創造金屬光澤
+                float diffuse = max(0.0, dot(n, l)) * 0.5 + 0.5;
                 vec3 reflection = reflect(-l, n);
-                float specular = pow(max(0.0, dot(rd, reflection)), 32.0); // 高光係數
+                float specular = pow(max(0.0, dot(rd, reflection)), 32.0);
                 
-                // 4. 陰影與AO
                 float shadow = getSoftShadow(p, vec3(2.0, 4.0, -3.0));
                 float ao = getAO(p, n);
 
-                // --- 材質顏色設定 ---
                 vec3 objCol;
-                if (mat < 1.5) { // 核心盒子
-                     objCol = mix(vec3(0.2, 0.8, 1.0), vec3(0.9, 0.1, 0.5), p.z * 0.1 + 0.5); // 根據位置變色
-                } else { // 周圍球體
-                     objCol = vec3(1.0, 1.0, 1.0); // 白色球體，主要靠環境光和反射上色
-                     specular *= 2.0; // 球體高光更強
+                if (mat < 1.5) {
+                     objCol = mix(vec3(0.2, 0.8, 1.0), vec3(0.9, 0.1, 0.5), p.z * 0.1 + 0.5);
+                } else {
+                     objCol = vec3(1.0, 1.0, 1.0);
+                     specular *= 2.0;
                 }
                 
-                // 綜合所有光照
-                // 基礎色 * (漫射 * 陰影) + 高光 * 陰影 + 環境光
                 col = objCol * (diffuse * shadow) + (specular * shadow) * vec3(1.0, 0.9, 0.5) + ambient;
-                
-                // 應用 AO
                 col *= ao;
 
-                // --- 特效：體積光 (God Rays / Fog) ---
-                // 根據距離增加霧氣，讓場景有深度
                 float fog = 1.0 - exp( -0.1 * d * d );
-                col = mix( col, vec3(0.0, 0.2, 0.4), fog); // 霧氣帶有冷藍色
+                col = mix( col, vec3(0.0, 0.2, 0.4), fog);
 
-                // --- 發光邊緣 (Rim Lighting) ---
                 float rim = 1.0 - max(0.0, dot(n, -rd));
-                col += pow(rim, 3.0) * vec3(0.0, 0.5, 1.0) * u_click; // 點擊時邊緣發光增強
+                col += pow(rim, 3.0) * vec3(0.0, 0.5, 1.0) * (0.5 + u_click * 1.5);
                 
-                // --- 伽瑪校正 ---
-                col = pow(col, vec3(0.4545)); // 讓色彩空間更正確
+                col = pow(col, vec3(0.4545));
             } else {
-                // 未擊中物體時，增加一點中心輻射光
                 col += vec3(0.0, 0.2, 0.5) * max(0.0, 0.2 - length(uv));
             }
 
-            // 最終輸出
             gl_FragColor = vec4(col, 1.0);
         }
     </script>
 
     <script>
-        // --- JavaScript 初始化 WebGL ---
         const canvas = document.getElementById('c');
         const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
         const loader = document.getElementById('loader');
 
         if (!gl) {
-            alert("無法初始化 WebGL，請更新瀏覽器或顯卡驅動。");
-            loader.innerHTML = "WebGL ERROR";
+            alert("無法初始化 WebGL");
         }
 
-        // 設置解析度
         function resize() {
             canvas.width = window.innerWidth * window.devicePixelRatio;
             canvas.height = window.innerHeight * window.devicePixelRatio;
@@ -267,13 +217,12 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // 創建並編譯 Shader
         function createShader(gl, type, source) {
             const shader = gl.createShader(type);
             gl.shaderSource(shader, source);
             gl.compileShader(shader);
             if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-                console.error('Shader 編譯錯誤:', gl.getShaderInfoLog(shader));
+                console.error(gl.getShaderInfoLog(shader));
                 gl.deleteShader(shader);
                 return null;
             }
@@ -285,56 +234,76 @@
         const vs = createShader(gl, gl.VERTEX_SHADER, vsSource);
         const fs = createShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
-        // 連結 Program
         const program = gl.createProgram();
         gl.attachShader(program, vs);
         gl.attachShader(program, fs);
         gl.linkProgram(program);
-
-        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-            alert('無法初始化 shader 程式: ' + gl.getProgramInfoLog(program));
-        }
-
         gl.useProgram(program);
 
-        // 設定全螢幕矩形緩衝區
         const positionBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-            -1, -1,  // 左下
-             1, -1,  // 右下
-            -1,  1,  // 左上
-            -1,  1,  // 左上
-             1, -1,  // 右下
-             1,  1,  // 右上
+            -1, -1,  1, -1, -1,  1,
+            -1,  1,  1, -1,  1,  1,
         ]), gl.STATIC_DRAW);
 
         const positionLocation = gl.getAttribLocation(program, "a_position");
         gl.enableVertexAttribArray(positionLocation);
         gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0);
 
-        // 取得 Uniform 位置
         const uResolutionLoc = gl.getUniformLocation(program, "u_resolution");
         const uMouseLoc = gl.getUniformLocation(program, "u_mouse");
         const uTimeLoc = gl.getUniformLocation(program, "u_time");
         const uClickLoc = gl.getUniformLocation(program, "u_click");
 
-        // 互動狀態
-        const mouse = { x: 0, y: 0, click: 0 };
+        const mouse = { x: window.innerWidth / 2 * window.devicePixelRatio, y: window.innerHeight / 2 * window.devicePixelRatio, targetX: window.innerWidth / 2 * window.devicePixelRatio, targetY: window.innerHeight / 2 * window.devicePixelRatio, click: 0, targetClick: 0 };
+
         window.addEventListener('mousemove', e => {
-            mouse.x = e.clientX * window.devicePixelRatio;
-            // WebGL 座標系 Y 軸向上，螢幕 Y 軸向下，需要反轉
-            mouse.y = canvas.height - e.clientY * window.devicePixelRatio;
+            mouse.targetX = e.clientX * window.devicePixelRatio;
+            mouse.targetY = canvas.height - e.clientY * window.devicePixelRatio;
         });
-        window.addEventListener('mousedown', () => mouse.click = 1);
-        window.addEventListener('mouseup', () => mouse.click = 0);
+
+        window.addEventListener('mousedown', () => mouse.targetClick = 1);
+        window.addEventListener('mouseup', () => mouse.targetClick = 0);
         
-        // 觸控支援
-        window.addEventListener('touchstart', e => {
-            mouse.click = 1;
+        window.addEventListener('touchmove', e => {
             if (e.touches.length > 0) {
-                mouse.x = e.touches[0].clientX * window.devicePixelRatio;
-                mouse.y = canvas.height - e.touches[0].clientY * window.devicePixelRatio;
+                mouse.targetX = e.touches[0].clientX * window.devicePixelRatio;
+                mouse.targetY = canvas.height - e.touches[0].clientY * window.devicePixelRatio;
             }
-        }, {passive: false});
-        window.addEventListener('touchend', ()
+        }, {passive: true});
+
+        window.addEventListener('touchstart', () => mouse.targetClick = 1);
+        window.addEventListener('touchend', () => mouse.targetClick = 0);
+
+        let startTime = Date.now();
+        let loaded = false;
+
+        function render() {
+            let currentTime = (Date.now() - startTime) * 0.001;
+
+            // 平滑跟隨滑鼠移動
+            mouse.x += (mouse.targetX - mouse.x) * 0.08;
+            mouse.y += (mouse.targetY - mouse.y) * 0.08;
+            mouse.click += (mouse.targetClick - mouse.click) * 0.1;
+
+            gl.uniform2f(uResolutionLoc, canvas.width, canvas.height);
+            gl.uniform2f(uMouseLoc, mouse.x, mouse.y);
+            gl.uniform1f(uTimeLoc, currentTime);
+            gl.uniform1f(uClickLoc, mouse.click);
+
+            gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+            if (!loaded && currentTime > 0.2) {
+                loader.style.opacity = 0;
+                setTimeout(() => loader.remove(), 500);
+                loaded = true;
+            }
+
+            requestAnimationFrame(render);
+        }
+
+        render();
+    </script>
+</body>
+</html>
